@@ -1,173 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portfolio</title> <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;400;600;700&display=swap" rel="stylesheet">
-<link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
-</head>
-<body>
-    <section class="header">
-        <nav>
-            <a href="index.html"><img src="/eduford_img/logo.png" alt=""></a>
-            <div class="nav-links" id="navLinks">
-                <i class="fa fa-times" onclick="hideMenu()"></i>
-                <ul>
-                    <li><a href="index.html">HOME</a></li>
-                    <li><a href="AboutMe.html">ABOUT</a></li>
-                    <li><a href="Resume.html">RESUME</a></li>
-                    <li><a href="Blog.html">BLOG</a></li>
-                    <li><a href="Contact.html">CONTACT</a></li>
-                </ul>
-            </div>
-            <i class="fa fa-bars" onclick="showMenu()"></i>
-        </nav>
-        <div class="text-box">
-            <h1>My Profile and portfolio with C.V </h1>
-            <p>All about me is here <br> other Projects</p>
-            <a href="" class="hero-btn">Browse to know more</a>
-        </div>
-    </section>
-    <!-- Course -->
-    <section class="course">
-        <h1>Courses I Have Done</h1>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Odit qui eveniet doloribus commodi reprehenderit, esse quibusdam tempore sit numquam laborum.</p>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='2' width='20' height='8' rx='2'/><rect x='2' y='14' width='20' height='8' rx='2'/><line x1='6' y1='6' x2='6.01' y2='6'/><line x1='6' y1='18' x2='6.01' y2='18'/><path d='M10 6h8'/><path d='M10 18h8'/></svg>" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Primary Meta Tags -->
+    <title>Akash Rai — AI Engineer | LLM Systems, Agents & Local Inference</title>
+    <meta name="title" content="Akash Rai — AI Engineer | LLM Systems, Agents & Local Inference" />
+    <meta name="description" content="AI Engineer with 2+ years of production experience building secure enterprise & air-gapped document intelligence, agentic workflows, vLLM inference optimization on Blackwell GPUs, and full-stack GenAI platforms." />
+    <meta name="keywords" content="Akash Rai, AI Engineer, LLM Systems, Agentic AI, vLLM, Blackwell GPU, FP8 Inference, RAG, LangGraph, FastAPI, Bengaluru, Machine Learning Systems" />
+    <meta name="author" content="Akash Rai" />
 
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://akashrai2003.github.io/MyPortfolio.github.io/" />
+    <meta property="og:title" content="Akash Rai — AI Engineer | LLM Systems, Agents & Local Inference" />
+    <meta property="og:description" content="Production GenAI systems from retrieval to GPU inference. Document intelligence, agentic workflows, Blackwell FP8 optimization, and full-stack platforms." />
 
-        <div class="row">
-            <div class="course-col"><h3>Intermediate</h3>
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quod labore minus consectetur, ad ratione inventore nisi fuga voluptate ipsum, nemo sint laboriosam ipsam? Quibusdam tempore mollitia dolores voluptatibus voluptas explicabo.</p>
-            </div>
-            <div class="course-col"><h3>Degree</h3>
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quod labore minus consectetur, ad ratione inventore nisi fuga voluptate ipsum, nemo sint laboriosam ipsam? Quibusdam tempore mollitia dolores voluptatibus voluptas explicabo.</p>
-            </div>
-            <div class="course-col"><h3>Post-Graduate</h3>
-                <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quod labore minus consectetur, ad ratione inventore nisi fuga voluptate ipsum, nemo sint laboriosam ipsam? Quibusdam tempore mollitia dolores voluptatibus voluptas explicabo.</p>
-            </div>
-        </div>
-    </section>
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="Akash Rai — AI Engineer | LLM Systems, Agents & Local Inference" />
+    <meta property="twitter:description" content="Production GenAI systems from retrieval to GPU inference. Document intelligence, agentic workflows, Blackwell FP8 optimization, and full-stack platforms." />
 
-<!-- Campus  -->
-    <section class="campus">
-        <h1>Our Global Campus</h1>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Hic, officiis.</p>
-
-        <div class="row">
-            <div class="campus-col">
-                <img src="eduford_img/london.png" alt="">
-                <div class="LAYER">
-                    <h3>LONDON</h3>
-                </div>
-            </div>
-            <div class="campus-col">
-                <img src="eduford_img/newyork.png" alt="">
-                <div class="LAYER">
-                    <h3>NEW YORK</h3>
-                </div>
-            </div>
-            <div class="campus-col">
-                <img src="eduford_img/washington.png" alt="">
-                <div class="LAYER">
-                    <h3>WASHINGTON</h3>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Facilites -->
-
-    <section class="facilities"> 
-        <h1>Our Facilities </h1>
-        <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Laudantium, in?</p>
-        <div class="row">
-            <div class="facilities-col">
-                <img src="eduford_img/basketball.png" alt="">
-                <h3>Largest Play Ground</h3>
-                <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Sed nostrum et ipsam deserunt cumque saepe in consequuntur eveniet illum impedit!</p>
-            </div>
-        
-            <div class="facilities-col">
-                <img src="eduford_img/cafeteria.png" alt="">
-
-                <h3>Tasty And Healthy Food</h3>
-                <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Sed nostrum et ipsam deserunt cumque saepe in consequuntur eveniet illum impedit!</p>
-            </div>
-        
-            <div class="facilities-col">
-                <img src="eduford_img/library.png" alt="">
-                <h3>World Class Library</h3>
-                <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Sed nostrum et ipsam deserunt cumque saepe in consequuntur eveniet illum impedit!</p>
-            </div>
-        </div>
-    </section>
-
-
-    <!-- Testimonials -->
-    <section class="testimonials">
-        <h1>What They Say </h1>
-        <p>Lorem ipsum, dolor sit amet consectetur adipisicing elit. Laudantium, in?</p>
-
-        <div class="row">
-            <div class="testimonial-col">
-                <img src="eduford_img/user1.jpg" alt="">
-                <div>
-                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quod sequi unde assumenda eligendi in ab? Ducimus eum fugit magnam, debitis ex reprehenderit fugiat in illo iure optio rerum ad dolor eligendi soluta autem facere beatae libero! Explicabo officia, deleniti delectus in cupiditate voluptate unde nemo illo reprehenderit a accusantium? At.</p>
-                    <h3>Christine Berle</h3>
-                    <i class="fa fa-star" ></i>
-                    <i class="fa fa-star" ></i>
-                    <i class="fa fa-star" ></i>
-                    <i class="fa fa-star" ></i>
-                    <i class="fa fa-star-o" ></i>
-                </div>
-            </div>
-            <div class="testimonial-col">
-                <img src="eduford_img/user2.jpg" alt="">
-                <div>
-                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quod sequi unde assumenda eligendi in ab? Ducimus eum fugit magnam, debitis ex reprehenderit fugiat in illo iure optio rerum ad dolor eligendi soluta autem facere beatae libero! Explicabo officia, deleniti delectus in cupiditate voluptate unde nemo illo reprehenderit a accusantium? At.</p>
-                    <h3>Arnav Keche</h3>
-                    <i class="fa fa-star" ></i>
-                    <i class="fa fa-star" ></i>
-                    <i class="fa fa-star" ></i>
-                    <i class="fa fa-star" ></i>
-                    <i class="fa fa-star-half-o" ></i>
-                </div>
-            </div>
-        </div>
-    </section>
-
-
-    <!-- Call To Action -->
-    <section class="cta">
-        <h1>FreeLancing Currently!</h1>
-        <a href="" class="hero-btn">CONTACT US</a>
-    </section>
-
-    <!-- Footer  -->
-    <section class="footer">
-        <h4>About Me</h4>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quas voluptates quam dignissimos quos, <br> ab id dolorum beatae fugiat cum nemo illum, aperiam, cumque veniam. Quia dolorem quam quibusdam molestiae quo?</p>
-        <div class="icons">
-            <i class="fa fa-facebook" ></i>
-            <i class="fa fa-twitter" ></i>
-            <i class="fa fa-instagram" ></i>
-            <i class="fa fa-linkedin" ></i>
-        </div>
-        <p>Made with <i class="fa fa-heart-o" ></i> By Akash Rai</p>
-    </section>
-    <!-- JavaScript for Toggle Menu  -->
-    <script>
-        var navLinks= document.getElementById("navLinks")
-        function showMenu(){
-            navLinks.style.right="0";
-        }
-        function hideMenu(){
-            navLinks.style.right="-200px";
-        }
-    </script>
-
-</body>
+    <!-- Fonts: Plus Jakarta Sans & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
