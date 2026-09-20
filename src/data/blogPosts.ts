@@ -176,10 +176,10 @@ By configuring **Chunked Prefill**, long prompts are partitioned into bounded ch
 
 ### References
 
-- <span id="ref-1">**[1]**</span> Kwon et al., *"Efficient Memory Management for Large Language Model Serving with PagedAttention"*, SOSP 2023. [Paper](https://arxiv.org/abs/2309.06180)
-- <span id="ref-2">**[2]**</span> Dao, *"FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning"*, 2023. [Paper](https://arxiv.org/abs/2307.08691)
-- <span id="ref-3">**[3]**</span> DeepSeek-AI, *"DeepSeek-V3 Technical Report: Multi-Head Latent Attention & Multi-Token Prediction"*, 2024. [Paper](https://arxiv.org/abs/2412.19437)
-- <span id="ref-4">**[4]**</span> NVIDIA Corporation, *"TensorRT-LLM: High-Performance GPU Inference Architecture"*, 2024. [Documentation](https://github.com/NVIDIA/TensorRT-LLM)
+- **[1]** Kwon et al., *"Efficient Memory Management for Large Language Model Serving with PagedAttention"*, SOSP 2023. [Paper](https://arxiv.org/abs/2309.06180)
+- **[2]** Dao, *"FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning"*, 2023. [Paper](https://arxiv.org/abs/2307.08691)
+- **[3]** DeepSeek-AI, *"DeepSeek-V3 Technical Report: Multi-Head Latent Attention & Multi-Token Prediction"*, 2024. [Paper](https://arxiv.org/abs/2412.19437)
+- **[4]** NVIDIA Corporation, *"TensorRT-LLM: High-Performance GPU Inference Architecture"*, 2024. [Documentation](https://github.com/NVIDIA/TensorRT-LLM)
     `
   },
   {
