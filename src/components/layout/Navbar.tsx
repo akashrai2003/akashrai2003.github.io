@@ -15,6 +15,7 @@ import {
   Layers
 } from 'lucide-react';
 import { siteConfig } from '../../data/siteConfig';
+import { Logo } from '../ui/Logo';
 
 interface NavbarProps {
   activeSection: string;
@@ -89,19 +90,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             gap: '0.85rem' 
           }}
         >
-          <div style={{
-            width: '38px',
-            height: '38px',
-            borderRadius: 'var(--radius-md)',
-            background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(99, 102, 241, 0.2))',
-            border: '1px solid var(--border-highlight)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--accent-cyan)'
-          }}>
-            <Cpu size={20} />
-          </div>
+          <Logo size={36} />
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span style={{ fontWeight: 800, fontSize: '1.05rem', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>

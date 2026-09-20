@@ -4,16 +4,19 @@ import { Footer } from './components/layout/Footer';
 import { Hero } from './components/home/Hero';
 import { CaseStudyView } from './components/case-study/CaseStudyView';
 import { BlogView } from './components/blog/BlogView';
+import { BlogPostPage } from './components/blog/BlogPostPage';
 import { ProjectsView } from './components/projects/ProjectsView';
 import { SkillsView } from './components/skills/SkillsView';
 import { ExperienceTimeline } from './components/experience/ExperienceTimeline';
 import { ConsultingSection } from './components/consulting/ConsultingSection';
 import { ContactSection } from './components/contact/ContactSection';
 import { ResumeModal } from './components/resume/ResumeModal';
+import { BlogPost, blogPosts } from './data/blogPosts';
 
 export const App: React.FC = () => {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [activeSection, setActiveSection] = useState<string>('overview');
+  const [activePost, setActivePost] = useState<BlogPost | null>(null);
   const [resumeModalOpen, setResumeModalOpen] = useState<boolean>(false);
 
   useEffect(() => {
@@ -24,6 +27,16 @@ export const App: React.FC = () => {
     } else {
       document.documentElement.setAttribute('data-theme', 'dark');
     }
+
+    // Check if URL hash points to a specific blog slug
+    const hash = window.location.hash.replace('#', '');
+    if (hash.startsWith('post/')) {
+      const slug = hash.replace('post/', '');
+      const found = blogPosts.find((p) => p.slug === slug);
+      if (found) {
+        setActivePost(found);
+      }
+    }
   }, []);
 
   const toggleTheme = () => {
@@ -33,13 +46,47 @@ export const App: React.FC = () => {
     document.documentElement.setAttribute('data-theme', nextTheme);
   };
 
-  const handleNavigate = (sectionId: string) => {
-    setActiveSection(sectionId);
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+  const handleSelectPost = (post: BlogPost) => {
+    setActivePost(post);
+    window.location.hash = `post/${post.slug}`;
+    window.scrollTo({ top: 0, behavior: 'instant' });
   };
+
+  const handleBackToWriting = () => {
+    setActivePost(null);
+    window.location.hash = 'writing';
+    setTimeout(() => {
+      const element = document.getElementById('writing');
+      if (element) {
+        element.scrollIntoView({ behavior: 'instant' });
+      }
+    }, 50);
+  };
+
+  const handleNavigate = (sectionId: string) => {
+    if (activePost) {
+      setActivePost(null);
+    }
+    setActiveSection(sectionId);
+    setTimeout(() => {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 50);
+  };
+
+  // Dedicated Full-Page Article View (Aleksa Gordic style)
+  if (activePost) {
+    return (
+      <BlogPostPage
+        post={activePost}
+        onBack={handleBackToWriting}
+        theme={theme}
+        toggleTheme={toggleTheme}
+      />
+    );
+  }
 
   return (
     <div className="app-root">
@@ -67,7 +114,7 @@ export const App: React.FC = () => {
         <CaseStudyView />
 
         {/* 4. Technical Writing / Engineering Blog */}
-        <BlogView />
+        <BlogView onSelectPost={handleSelectPost} />
 
         {/* 5. Selected Projects */}
         <ProjectsView />

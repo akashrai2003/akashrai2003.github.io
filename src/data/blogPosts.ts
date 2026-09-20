@@ -30,10 +30,15 @@ In modern generative AI infrastructure, deploying large language models efficien
 While running single-prompt inference using naive frameworks is trivial, building a high-concurrency serving system that sustains hundreds of requests per second under unpredictable prompt lengths requires moving deep into the runtime architecture.
 
 In this deep dive, we examine the core mechanics that govern high-throughput LLM engines like **vLLM**:
-1. **The Dual Phase Nature of LLM Inference**: Compute-bound prefill vs. memory-bandwidth-bound decoding.
-2. **PagedAttention & Virtual Memory Allocation**: Solving internal and external fragmentation in the KV cache.
-3. **KV Cache Memory Math**: Comparing 16-bit vs. 8-bit (FP8) quantization dynamics.
+1. **The Dual-Phase Nature of LLM Inference**: Compute-bound prefill vs. memory-bandwidth-bound decoding.
+2. **PagedAttention & Virtual Memory Allocation**: Eliminating internal and external fragmentation.
+3. **KV Cache Memory Math**: Evaluating FP16 vs. calibrated FP8 quantization dynamics.
 4. **Chunked Prefill & Continuous Batch Scheduling**: Preventing Time-To-First-Token (TTFT) starvation.
+
+---
+
+> 📝 **Systems Architecture Note**
+> Analysis is framed around production serving engines (vLLM, TensorRT-LLM) running under concurrent batch workloads where request lengths vary dynamically across users.
 
 ---
 
@@ -42,23 +47,23 @@ In this deep dive, we examine the core mechanics that govern high-throughput LLM
 Every autoregressive transformer request proceeds through two distinct computational phases:
 
 \`\`\`
-+-------------------------------------------------------------------------+
-| Phase 1: Prefill (Context Phase)                                        |
-| - Ingests the entire prompt prompt_tokens[0:N] simultaneously.          |
-| - Compute-bound: Highly parallel matrix multiplications (GEMM).         |
-| - Generates the initial KV tensors for all prompt tokens.               |
-+-------------------------------------------------------------------------+
-                                    |
-                                    v
-+-------------------------------------------------------------------------+
-| Phase 2: Decode (Generation Phase)                                      |
-| - Generates tokens sequentially, one token per forward pass.             |
-| - Memory-bandwidth-bound: GEMV operations loading all weights + cached KV.|
-| - Low arithmetic intensity (FLOP/byte).                                 |
-+-------------------------------------------------------------------------+
++-------------------------------------------------------------------------------+
+| Phase 1: Prefill (Context / Ingestion Phase)                                  |
+| - Ingests the entire prompt sequence simultaneously.                          |
+| - Compute-bound: Highly parallel matrix multiplications (GEMM).               |
+| - Generates initial Key & Value vectors across all prompt tokens.             |
++-------------------------------------------------------------------------------+
+                                        |
+                                        v
++-------------------------------------------------------------------------------+
+| Phase 2: Decode (Token Generation Phase)                                      |
+| - Generates output tokens sequentially, one token per forward pass.           |
+| - Memory-bandwidth-bound: GEMV operations loading all weights + cached KV.   |
+| - Low arithmetic intensity (FLOPs / byte).                                    |
++-------------------------------------------------------------------------------+
 \`\`\`
 
-Because decoding is memory-bandwidth-bound, traditional static batching (where all sequences wait for the slowest sequence to complete) wastes enormous amounts of GPU compute. 
+Because decoding is memory-bandwidth-bound, traditional static batching (where all sequences wait for the slowest sequence to finish) severely under-utilizes GPU compute cores.
 
 Modern serving engines solve this via **Continuous (Iteration-Level) Batching**: after every single token generation step, completed requests are evicted, and new requests are immediately scheduled into the active batch.
 
@@ -66,14 +71,14 @@ Modern serving engines solve this via **Continuous (Iteration-Level) Batching**:
 
 ## 2. Memory Fragmentation & PagedAttention
 
-In naive serving implementations, KV cache memory must be pre-allocated contiguously based on the model's theoretical maximum context length (e.g., 32,768 tokens). This causes severe issues:
+In traditional serving implementations, KV cache memory must be pre-allocated contiguously based on the model's theoretical maximum context length (e.g., 32,768 tokens). This causes severe issues:
 
-- **Internal Fragmentation**: If a user asks a 500-token question, the remaining 32,000 pre-allocated slots sit completely idle in VRAM.
-- **External Fragmentation**: Memory allocators struggle to find contiguous virtual memory blocks over time as sequences join and terminate.
+- **Internal Fragmentation**: If a user submits a 500-token prompt, the remaining 32,000 pre-allocated slots sit completely idle in VRAM.
+- **External Fragmentation**: Memory allocators struggle to find contiguous virtual memory blocks over time as sequences dynamically join and terminate.
 
 \`\`\`
 Naive Contiguous Allocation:
-[Token 0...500] [                 Unused Reserved Memory                 ] ❌ Wasted VRAM!
+[Tokens 0...500] [                 Unused Reserved Memory                 ] ❌ Wasted VRAM!
 
 PagedAttention Virtual Block Allocation:
 Logical Cache:  [Block 0 (16 tok)] -> [Block 1 (16 tok)] -> [Block 2 (16 tok)]
@@ -86,37 +91,54 @@ This eliminates internal fragmentation, bringing memory waste down to less than 
 
 ---
 
-## 3. The Memory Math: Why KV Quantization (FP8) Matters
+## 3. The Memory Math: Why KV Cache Quantization (FP8) Matters
 
 Let us inspect the exact memory scaling of the KV cache across transformer attention layers.
 
-For any transformer model:
-- $L$: number of layers
-- $H_{kv}$: number of Key/Value attention heads
-- $D_{head}$: dimension of each attention head
-- $B$: precision bytes per element ($2$ for FP16/BF16, $1$ for FP8)
+\`\`\`
+KV Cache Memory Formula:
+Bytes per token = 2 × L × H_kv × D_head × B
 
-The memory consumed per token across all layers is:
-$$\\text{Bytes per token} = 2 \\times L \\times H_{kv} \\times D_{head} \\times B$$
+Where:
+  L      = Number of transformer layers
+  H_kv   = Number of Key/Value attention heads
+  D_head = Dimension of each attention head
+  B      = Precision bytes per element (2 for FP16/BF16, 1 for FP8)
+\`\`\`
 
-Let's evaluate this on an 8-billion parameter model ($L = 36$, $H_{kv} = 8$, $D_{head} = 128$):
+Let's evaluate this on a standard 8-billion parameter model:
+- **Layers (L)**: 36
+- **KV Heads (H_kv)**: 8
+- **Head Dimension (D_head)**: 128
 
-### Standard FP16 ($B = 2$ bytes):
-$$\\text{Bytes/token} = 2 \\times 36 \\times 8 \\times 128 \\times 2 = 147,456 \\text{ bytes} \\approx 144 \\text{ KB/token}$$
+### Standard FP16 (B = 2 bytes per element):
+\`\`\`
+Bytes per token = 2 × 36 × 8 × 128 × 2
+                = 147,456 bytes
+                ≈ 144 KB per token
+\`\`\`
 
-For a single **32,000-token context**:
-$$32,000 \\times 144 \\text{ KB} \\approx 4.608 \\text{ GB}$$
+At a context length of **32,000 tokens for a single request**:
+\`\`\`
+32,000 tokens × 144 KB/token ≈ 4.61 GB of KV Cache
+\`\`\`
 
 If you serve **4 concurrent long-context requests**:
-$$4 \\times 4.608 \\text{ GB} = 18.43 \\text{ GB of KV Cache}$$
+\`\`\`
+4 requests × 4.61 GB = 18.44 GB of KV Cache alone!
+\`\`\`
 
-Combined with model weights (~16 GB in FP16), the total requirement is **>34 GB VRAM**. A single 24 GB or 16 GB workstation GPU crashes instantly with CUDA Out-Of-Memory!
+Combined with model weights (~16 GB in FP16), the total requirement is **>34 GB of VRAM**. A single 24 GB or 16 GB workstation GPU crashes instantly with CUDA Out-Of-Memory!
 
-### Calibrated FP8 KV Cache ($B = 1$ byte):
-$$\\text{Bytes/token} = 2 \\times 36 \\times 8 \\times 128 \\times 1 = 73,728 \\text{ bytes} \\approx 72 \\text{ KB/token}$$
+### Calibrated FP8 KV Cache (B = 1 byte per element):
+\`\`\`
+Bytes per token = 2 × 36 × 8 × 128 × 1
+                = 73,728 bytes
+                ≈ 72 KB per token (Exact 50% Reduction)
+\`\`\`
 
 By quantizing the KV cache to 8-bit precision (e.g., using FP8 \`e4m3fn\` with scale factors):
-- Memory per token is halved.
+- Memory per token is cut in half.
 - 32,000 tokens require only **2.30 GB**.
 - You can pack **twice as many concurrent active sequences** into the exact same physical VRAM footprint without degrading attention retrieval accuracy.
 
@@ -125,7 +147,7 @@ By quantizing the KV cache to 8-bit precision (e.g., using FP8 \`e4m3fn\` with s
 ## 4. Chunked Prefill: Solving TTFT Starvation
 
 When high concurrency traffic hits a serving engine, a fundamental conflict arises:
-- **Decode requests** want low latency (quick continuous generation).
+- **Decode requests** want low latency (quick continuous token generation).
 - **Prefill requests** arrive with massive prompts (e.g., a 20,000-token uploaded legal brief).
 
 If an engine executes the full 20,000-token prefill in a single step, the forward pass consumes several hundred milliseconds of pure GEMM compute. During this window, all ongoing decode sequences are completely starved, causing severe jitter and Time-To-First-Token (TTFT) degradation.
@@ -136,9 +158,9 @@ Step 1: [================== 20,000 Token Prefill ==================] (Decode req
 Step 2: [Decode Token]
 
 With Chunked Prefill:
-Step 1: [Chunk 1: 4096 tokens] + [Active Decode Tokens]
-Step 2: [Chunk 2: 4096 tokens] + [Active Decode Tokens]
-Step 3: [Chunk 3: 4096 tokens] + [Active Decode Tokens]
+Step 1: [Chunk 1: 4,096 tokens] + [Active Decode Tokens]
+Step 2: [Chunk 2: 4,096 tokens] + [Active Decode Tokens]
+Step 3: [Chunk 3: 4,096 tokens] + [Active Decode Tokens]
 \`\`\`
 
 By configuring **Chunked Prefill**, long prompts are partitioned into bounded chunks (e.g., 4,096 or 8,192 tokens). In each engine step, a chunk of prefill compute is co-scheduled alongside active decode tokens, ensuring consistent streaming latency for existing users while steadily ingesting large document prompts.
@@ -148,7 +170,7 @@ By configuring **Chunked Prefill**, long prompts are partitioned into bounded ch
 ## 5. Architectural Summary & Production Takeaways
 
 1. **Memory Capacity Dictates Concurrency**: In high-throughput serving, model weights are static; KV cache scaling determines your throughput ceiling.
-2. **Quantize the Cache, Not Just Weights**: While weight quantization (W8A8 or W4A16) reduces loading size, KV cache quantization (FP8 KV) directly unlocks higher concurrency.
+2. **Quantize the Cache, Not Just Weights**: While weight quantization reduces loading size, KV cache quantization (FP8 KV) directly unlocks higher concurrency.
 3. **Co-Schedule Prefill and Decode**: Use chunked prefill to maintain deterministic latency SLAs across mixed long-document and conversational traffic.
     `
   },
@@ -427,8 +449,7 @@ Top 5 Chunks -> Dynamic Context Budget Assembly -> Prompt to LLM
 ## 2. Bi-Encoders vs. Cross-Encoders: The Attention Trade-Off
 
 - **Bi-Encoders (Embedding Models)**: Compute vector embeddings for the query and document chunks independently. While fast (allowing pre-computed vector indexing), compressing an entire chunk into a single 768-dimensional vector loses token-level interactions.
-- **Cross-Encoders**: Feed the query and candidate chunk together into all transformer attention layers simultaneously. Every query token directly attends to every document token:
-$$\\text{Relevance Score} = \\text{CrossEncoder}(\\text{Query}, \\text{Document Chunk})$$
+- **Cross-Encoders**: Feed the query and candidate chunk together into all transformer attention layers simultaneously. Every query token directly attends to every document token.
 
 While running a cross-encoder across 100,000 documents is computationally prohibitive, running it across the **Top 40 candidates** identified by dense search takes only ~20ms, dramatically boosting ranking precision before hitting the generation LLM.
 

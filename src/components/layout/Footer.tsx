@@ -1,6 +1,7 @@
 import React from 'react';
-import { Github, Linkedin, Mail, Phone, ArrowUp, Cpu, ShieldCheck } from 'lucide-react';
+import { Github, Linkedin, Mail, Phone, ArrowUp, ShieldCheck } from 'lucide-react';
 import { siteConfig } from '../../data/siteConfig';
+import { Logo } from '../ui/Logo';
 
 export const Footer: React.FC = () => {
   const scrollToTop = () => {
@@ -24,19 +25,7 @@ export const Footer: React.FC = () => {
           {/* Identity & Positioning */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-              <div style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: 'var(--radius-sm)',
-                background: 'var(--accent-cyan-subtle)',
-                border: '1px solid var(--border-highlight)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'var(--accent-cyan)'
-              }}>
-                <Cpu size={18} />
-              </div>
+              <Logo size={32} />
               <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--text-primary)' }}>
                 {siteConfig.name}
               </span>

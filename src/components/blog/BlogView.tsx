@@ -1,12 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { BookOpen, Search, Clock, Calendar, ArrowRight, Sparkles } from 'lucide-react';
+import { BookOpen, Search, Clock, ArrowRight } from 'lucide-react';
 import { blogPosts, BlogPost } from '../../data/blogPosts';
-import { BlogPostModal } from './BlogPostModal';
 
-export const BlogView: React.FC = () => {
+interface BlogViewProps {
+  onSelectPost: (post: BlogPost) => void;
+}
+
+export const BlogView: React.FC<BlogViewProps> = ({ onSelectPost }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [activePost, setActivePost] = useState<BlogPost | null>(null);
 
   const categories = ['All', 'Inference & GPU', 'Enterprise AI', 'Air-Gapped Ops', 'Hardware & Kernels', 'RAG & Retrieval'];
 
@@ -32,10 +34,10 @@ export const BlogView: React.FC = () => {
             <span>Technical Writing & Architecture Notes</span>
           </div>
           <h2 className="section-title">
-            Engineering Insights & Postmortems
+            Engineering Insights & Systems Breakdown
           </h2>
           <p className="section-subtitle">
-            Long-form essays, memory math breakdowns, and production lessons on GPU inference, local-first serving, air-gapped platforms, and deterministic AI systems.
+            Long-form essays, memory math breakdowns, and production postmortems on GPU inference, local-first serving, air-gapped platforms, and deterministic AI systems.
           </p>
         </div>
 
@@ -58,7 +60,7 @@ export const BlogView: React.FC = () => {
             />
             <input
               type="text"
-              placeholder="Search posts by keyword, tag (e.g. vLLM, SAQL, Blackwell)..."
+              placeholder="Search posts by keyword, tag (e.g. vLLM, SAQL, PagedAttention)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
@@ -114,7 +116,7 @@ export const BlogView: React.FC = () => {
                 justifyContent: 'space-between',
                 cursor: 'pointer'
               }}
-              onClick={() => setActivePost(post)}
+              onClick={() => onSelectPost(post)}
             >
               <div>
                 {/* Meta Header */}
@@ -174,12 +176,6 @@ export const BlogView: React.FC = () => {
             </article>
           ))}
         </div>
-
-        {/* Modal Viewer */}
-        <BlogPostModal 
-          post={activePost} 
-          onClose={() => setActivePost(null)} 
-        />
 
       </div>
     </section>
