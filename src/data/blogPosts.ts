@@ -96,35 +96,45 @@ This eliminates internal fragmentation, bringing memory waste down to less than 
 
 Let us inspect the exact memory scaling of the KV cache across transformer attention layers.
 
-For any transformer model, the memory consumed per token across all layers is given by:
+> ⚙️ **KV Cache Memory Formula**
+>
+> **Bytes per token** = \`2 × L × H_kv × D_head × B\`
+>
+> Where:
+> - **L**: Number of transformer layers
+> - **H_kv**: Number of Key/Value attention heads (Grouped-Query Attention)
+> - **D_head**: Dimension of each attention head
+> - **B**: Precision bytes per element (2 for FP16/BF16, 1 for FP8)
 
-$$ \\text{Bytes per token} = 2 \\times L \\times H_{\\text{kv}} \\times D_{\\text{head}} \\times B $$
+Let's evaluate this on an 8-billion parameter model (\`L = 36\`, \`H_kv = 8\`, \`D_head = 128\`):
 
-Where:
-- $L$: number of transformer layers
-- $H_{\\text{kv}}$: number of Key/Value attention heads (Grouped-Query Attention)
-- $D_{\\text{head}}$: dimension of each attention head
-- $B$: precision bytes per element ($B = 2$ for standard FP16/BF16, $B = 1$ for FP8)
+### Standard FP16 (\`B = 2\` bytes per element):
 
-Let's evaluate this on an 8-billion parameter model ($L = 36$, $H_{\\text{kv}} = 8$, $D_{\\text{head}} = 128$):
-
-### Standard FP16 ($B = 2$ bytes):
-
-$$ \\text{Bytes per token} = 2 \\times 36 \\times 8 \\times 128 \\times 2 = 147{,}456 \\text{ bytes} \\approx 144 \\text{ KB/token} $$
+\`\`\`
+Bytes per token = 2 × 36 × 8 × 128 × 2
+                = 147,456 bytes
+                ≈ 144 KB per token
+\`\`\`
 
 For a single **32,000-token context**:
-
-$$ 32{,}000 \\times 144 \\text{ KB} \\approx 4.61 \\text{ GB of KV Cache} $$
+\`\`\`
+32,000 tokens × 144 KB/token ≈ 4.61 GB of KV Cache
+\`\`\`
 
 If you serve **4 concurrent long-context requests**:
-
-$$ 4 \\times 4.61 \\text{ GB} = 18.44 \\text{ GB of KV Cache alone!} $$
+\`\`\`
+4 requests × 4.61 GB = 18.44 GB of KV Cache alone!
+\`\`\`
 
 Combined with model weights (~16 GB in FP16), the total requirement is **>34 GB of VRAM**. A single 24 GB or 16 GB workstation GPU crashes instantly with CUDA Out-Of-Memory!
 
-### Calibrated FP8 KV Cache ($B = 1$ byte):
+### Calibrated FP8 KV Cache (\`B = 1\` byte per element):
 
-$$ \\text{Bytes per token} = 2 \\times 36 \\times 8 \\times 128 \\times 1 = 73{,}728 \\text{ bytes} \\approx 72 \\text{ KB/token} $$
+\`\`\`
+Bytes per token = 2 × 36 × 8 × 128 × 1
+                = 73,728 bytes
+                ≈ 72 KB per token (Exact 50% Reduction)
+\`\`\`
 
 By quantizing the KV cache to 8-bit precision (e.g., using FP8 \`e4m3fn\` with scale factors):
 - Memory per token is cut exactly in half.
