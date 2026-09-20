@@ -144,10 +144,10 @@ export const Footer: React.FC = () => {
               Systems Credibility
             </h4>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
-              <li>⚡ <strong>40K Context</strong> on 16 GB RTX 5060 Ti Blackwell</li>
-              <li>🛡️ <strong>Air-Gapped Ops</strong> for Indian Navy (5+ microservices)</li>
-              <li>⚙️ <strong>Deterministic SAQL</strong> replacing fragile RAG</li>
-              <li>🌟 <strong>Merged PR #3262</strong> in 12K-star kepler.gl</li>
+              <li>⚙️ <strong>vLLM Serving:</strong> PagedAttention memory budgeting & FP8 KV cache</li>
+              <li>🛡️ <strong>Sovereign AI:</strong> 5+ microservices platform deployed for Indian Navy</li>
+              <li>📐 <strong>Deterministic AI:</strong> Executable SAQL generation replacing naive RAG</li>
+              <li>🌟 <strong>Open Source:</strong> Merged PR #3262 in 12K-star kepler.gl</li>
               <li>📍 Based in <strong>Bengaluru, India</strong> • Available Globally</li>
             </ul>
           </div>

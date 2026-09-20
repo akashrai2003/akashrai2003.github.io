@@ -2,7 +2,6 @@ import React from 'react';
 import { 
   ArrowRight, 
   Cpu, 
-  Terminal, 
   BookOpen, 
   Layers, 
   ShieldCheck, 
@@ -37,28 +36,27 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate, onOpenResume }) => {
 
         {/* Headline */}
         <h1 style={{
-          fontSize: 'clamp(2.4rem, 5vw, 4rem)',
+          fontSize: 'clamp(2.4rem, 5vw, 3.8rem)',
           fontWeight: 800,
           lineHeight: 1.15,
           letterSpacing: '-0.035em',
-          maxWidth: '950px',
+          maxWidth: '980px',
           marginBottom: '1.5rem',
           color: 'var(--text-primary)'
         }}>
-          Building production LLM systems from{' '}
-          <span className="gradient-text">retrieval & agents</span> to{' '}
-          <span style={{ color: 'var(--accent-cyan)' }}>local GPU inference</span>.
+          Architecting <span className="gradient-text">high-throughput LLM inference</span>, sovereign platforms, and{' '}
+          <span style={{ color: 'var(--accent-cyan)' }}>deterministic AI systems</span>.
         </h1>
 
         {/* Supporting Copy */}
         <p style={{
           fontSize: 'clamp(1.05rem, 2vw, 1.25rem)',
           color: 'var(--text-secondary)',
-          maxWidth: '820px',
+          maxWidth: '840px',
           lineHeight: 1.7,
           marginBottom: '2.5rem'
         }}>
-          I work at the intersection of applied GenAI and systems engineering: architecting secure on-premise document intelligence platforms, designing deterministic query routing, building self-revising memory engines, and tuning vLLM serving parameters for high-throughput execution under real GPU memory budgets.
+          I work where applied GenAI meets systems engineering: optimizing open-weight inference engines (vLLM, PagedAttention, FP8 quantization, continuous batching), architecting sovereign on-premise platforms for defense stakeholders, resolving bleeding-edge GPU kernel compatibility bottlenecks, and replacing fragile prompt wrappers with deterministic execution over systems of record.
         </p>
 
         {/* Action CTAs */}
@@ -120,20 +118,20 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate, onOpenResume }) => {
             letterSpacing: '0.08em',
             color: 'var(--text-tertiary)'
           }}>
-            <Zap size={14} color="var(--accent-amber)" />
-            <span>Verified Systems Proof & Production Metrics</span>
+            <ShieldCheck size={14} color="var(--accent-cyan)" />
+            <span>Verified Systems Proof & Architectural Ownership</span>
           </div>
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
             gap: '1.5rem'
           }}>
             {siteConfig.proofMetrics.map((metric, idx) => (
               <div 
                 key={idx}
                 style={{
-                  padding: '1rem',
+                  padding: '1.2rem',
                   borderRadius: 'var(--radius-md)',
                   background: 'var(--bg-subtle)',
                   border: '1px solid var(--border-subtle)',
@@ -149,11 +147,11 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate, onOpenResume }) => {
                 }}
               >
                 <div style={{
-                  fontSize: '1.8rem',
+                  fontSize: '1.45rem',
                   fontWeight: 800,
                   fontFamily: 'var(--font-mono)',
                   color: 'var(--accent-cyan)',
-                  marginBottom: '0.25rem'
+                  marginBottom: '0.35rem'
                 }}>
                   {metric.value}
                 </div>
@@ -166,9 +164,9 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate, onOpenResume }) => {
                   {metric.label}
                 </div>
                 <div style={{
-                  fontSize: '0.8rem',
+                  fontSize: '0.82rem',
                   color: 'var(--text-tertiary)',
-                  lineHeight: 1.45
+                  lineHeight: 1.5
                 }}>
                   {metric.context}
                 </div>

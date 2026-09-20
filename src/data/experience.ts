@@ -21,19 +21,19 @@ export const experiences: ExperienceItem[] = [
     location: "Bengaluru, India",
     type: "full-time",
     badge: "Current Role",
-    summary: "Architecting and deploying secure on-premise GenAI platforms, optimizing open-weight LLM inference on modern GPU architectures, and delivering air-gapped document intelligence systems directly to enterprise & defense stakeholders.",
+    summary: "Architecting and deploying sovereign, air-gapped GenAI platforms for defense stakeholders, optimizing open-weight LLM inference engines (vLLM, PagedAttention, FP8 quantization), and resolving bleeding-edge GPU kernel compatibility bottlenecks on modern hardware.",
     highlights: [
-      "Architected and deployed an end-to-end document intelligence platform for the Indian Navy, evolving RAG-based report generation into an air-gapped local-LLM platform for document analysis, generation, and operational decision support.",
-      "Engineered an air-gapped microservices architecture (5+ Dockerized services, RabbitMQ, MongoDB, MinIO, OCR pipelines, vLLM serving) and led 3 multi-day on-site client deployments in Mumbai with zero external cloud dependencies.",
-      "Optimized Ministral-3-8B FP8 on NVIDIA RTX 5060 Ti (Blackwell) using vLLM, FP8 KV cache, and prompt-aware batching—doubling practical context from 22K to 40K tokens while serving 10–20 concurrent requests at ~750 output tokens/s within a strict 15 GB VRAM budget.",
-      "Enabled Gemma-4-12B NVFP4 inference on SM120 Blackwell hardware by systematically resolving CUDA 12.9, FlashInfer, CUTLASS, and JIT-cache build compatibility bottlenecks.",
+      "Architected and deployed an end-to-end document intelligence platform for the Indian Navy, evolving RAG-based report generation into an air-gapped sovereign LLM platform for operational document analysis, citation grounding, and decision support.",
+      "Engineered an air-gapped microservices architecture (5+ Dockerized services, RabbitMQ, MongoDB, MinIO, OCR pipelines, vLLM serving) and led 3 multi-day on-site client deployments in Mumbai operating under strict zero-internet security constraints.",
+      "Optimized vLLM serving pipelines using PagedAttention memory budgeting, FP8 KV cache allocation, and chunked prefill scheduling to maximize sequence capacity and aggregate token throughput within strict workstation VRAM budgets.",
+      "Resolved bleeding-edge CUDA 12.9, FlashInfer, CUTLASS, and JIT-cache build compatibility bottlenecks on SM120 Blackwell hardware to enable Gemma-4-12B NVFP4 inference; containerized Qwen3, Ministral, and Gemma deployments via vLLM and Docker Compose.",
       "Independently developed an agentic geospatial assistant connecting conversational LLMs with MBTiles map visualization, temporal reasoning, event playback, and Vega-Lite conversational analytics.",
       "Built a long-term knowledge base with OCR timeline extraction and revision semantics that automatically updates stored facts when superseding documents arrive.",
       "Designed a CuPy-powered GPU-accelerated gRPC classifier microservice, accelerating high-throughput batch predictions without importing heavy PyTorch dependencies downstream.",
       "Conducted domain-adaptive pre-training (DAPT) and PEFT/LoRA R&D on 4× NVIDIA L40S GPUs on AWS, curating military-domain corpora and benchmarking against base-model baselines."
     ],
-    technologies: ["vLLM", "NVIDIA Blackwell", "CUDA 12.9", "FP8/NVFP4", "FastAPI", "gRPC", "RabbitMQ", "Docker Compose", "MongoDB", "MinIO", "CuPy", "LangGraph", "PEFT/LoRA"],
-    metrics: ["40K Context on 16GB GPU", "~750 output tok/s", "5+ Air-gapped Microservices", "3 On-site Deployments"]
+    technologies: ["vLLM", "NVIDIA Blackwell", "CUDA 12.9", "FlashInfer", "FP8/NVFP4", "FastAPI", "gRPC", "RabbitMQ", "Docker Compose", "MongoDB", "MinIO", "CuPy", "LangGraph", "PEFT/LoRA"],
+    metrics: ["High-Throughput vLLM Serving", "Air-Gapped Sovereign Platform", "SM120 Blackwell Enablement", "3 On-Site Mumbai Deliveries"]
   },
   {
     id: "leanagile-nautics",

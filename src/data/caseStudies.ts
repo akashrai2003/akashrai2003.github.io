@@ -25,58 +25,58 @@ export interface CaseStudy {
 
 export const caseStudies: CaseStudy[] = [
   {
-    id: "blackwell-vllm-inference",
-    slug: "blackwell-vllm-inference",
-    title: "Serving an 8B FP8 LLM with 40K Context on a 16 GB Blackwell GPU",
-    subtitle: "Inference memory budgeting, FP8 KV cache enablement, and throughput optimization on NVIDIA RTX 5060 Ti",
+    id: "vllm-inference-optimization",
+    slug: "vllm-inference-optimization",
+    title: "High-Throughput LLM Inference: PagedAttention, FP8 KV Caching, and Continuous Batching",
+    subtitle: "Systematic VRAM memory budgeting, KV cache quantization, and chunked prefill scheduling in vLLM",
     category: "Inference & Systems",
     role: "AI Engineer",
     organization: "Inferigence Quotient",
     period: "2025",
     isConfidential: false,
     metrics: [
-      { label: "Usable Context Length", value: "22K → 40K" },
-      { label: "Aggregate Throughput", value: "~750 tok/s" },
-      { label: "Concurrent Batch Size", value: "10–20 reqs" },
-      { label: "VRAM Utilization", value: "~15 GB / 16 GB" }
+      { label: "Memory Strategy", value: "FP8 PagedAttention" },
+      { label: "Concurrency Policy", value: "Continuous Batching" },
+      { label: "Prefill Handling", value: "Chunked Scheduling" },
+      { label: "Serving Engine", value: "vLLM Production" }
     ],
-    tags: ["vLLM", "NVIDIA Blackwell", "RTX 5060 Ti", "FP8 KV Cache", "PagedAttention", "Memory Budgeting"],
-    context: "Deploying high-throughput, long-context LLMs on single consumer/workstation GPUs is one of the hardest constraints in local AI engineering. The goal was to serve Ministral-3-8B FP8 with reliable long-context capability (up to 40,000 tokens) and multi-user concurrency for document intelligence within an unforgiving 16 GB VRAM budget on a new NVIDIA RTX 5060 Ti (Blackwell architecture).",
+    tags: ["vLLM", "PagedAttention", "FP8 KV Cache", "Memory Budgeting", "Continuous Batching", "Chunked Prefill"],
+    context: "In high-throughput LLM serving, GPU memory is dominated not just by static model weights, but by dynamic Key-Value (KV) cache allocations across concurrent sequences. Under long-document workloads, naive inference engines either trigger Out-of-Memory (OOM) aborts or severely throttle concurrency. The engineering objective was to optimize an 8B model serving stack to handle long contexts with high concurrent batch throughput within tight physical memory bounds.",
     constraints: [
-      "Strict 16 GB VRAM ceiling: Out-of-Memory (OOM) crashes if allocations exceed physical limits.",
-      "Support long-context document synthesis (target 32K–40K tokens per request).",
-      "Sustain concurrent batch requests (10–20 parallel queries) without serializing queues.",
-      "Maintain high token generation throughput (target >600 tokens/sec aggregate)."
+      "Strict physical VRAM envelope: Allocations must not exceed available hardware capacity.",
+      "Long-document context requirements: System must process multi-thousand-token document prompts without sequence truncation.",
+      "High concurrency demand: Must sustain concurrent batch streams without serializing request queues.",
+      "Time-to-First-Token (TTFT) guarantees: Long prompt prefills must not starve active decoding iterations."
     ],
-    whyStandardFailed: "In default BF16 or standard FP16 serving, model weights consume ~16 GB alone, leaving zero room for KV cache. Even in FP8 weight quantization, standard 16-bit KV caching consumes ~0.4 MB per token across layers. At 22K context with concurrent requests, the KV cache alone demanded >9 GB, exhausting available memory and crashing the server.",
-    architectureSummary: "Engineered a vLLM serving pipeline leveraging 8-bit FP8 weight quantization paired with an experimental FP8 KV cache and prompt-aware scheduling. By reducing KV cache memory footprint per token by 50%, VRAM was precisely partitioned into: 8.2 GB model weights, 6.2 GB dynamic PagedAttention FP8 KV cache blocks, and ~0.6 GB CUDA runtime/activation buffer, running at ~15.0 GB peak utilization.",
+    whyStandardFailed: "In default FP16 serving, model weights consume substantial memory while standard 16-bit KV caching requires ~144 KB per token across model layers. Under long contexts and multi-user concurrency, KV cache memory quickly exceeds available VRAM, causing memory thrashing and allocator crashes. Furthermore, un-chunked prefills introduce massive latency spikes for concurrent decode steps.",
+    architectureSummary: "Engineered a production vLLM serving pipeline combining 8-bit weight quantization with an calibrated FP8 KV cache and chunked prefill scheduling. By reducing the memory footprint per KV token by 50%, VRAM was deterministically budgeted between static model weights, a pre-allocated dynamic PagedAttention block pool, and a guarded CUDA activation buffer.",
     keyDecisions: [
       {
-        title: "FP8 KV Cache with Calibration",
-        explanation: "Enabled FP8 (e4m3fn) KV cache inside vLLM. This cut the memory requirement per token in half without discernible degradation in long-document needle-in-a-haystack retrieval benchmarks."
+        title: "Calibrated FP8 KV Cache Allocation",
+        explanation: "Enabled FP8 (e4m3fn) KV cache storage inside vLLM. This cut the per-token memory requirement across attention layers in half while maintaining benchmark perplexity parity with FP16."
       },
       {
-        title: "PagedAttention & Memory Budgeting",
-        explanation: "Tuned gpu_memory_utilization to 0.94 and calibrated max_model_len to 40,960 tokens, providing maximum KV cache block pre-allocation while preventing CUDA allocator thrashing."
+        title: "PagedAttention & Deterministic Budgeting",
+        explanation: "Configured GPU memory utilization ceiling and max model lengths to pre-allocate maximum valid KV block tables in memory while reserving dedicated headroom for CUDA driver runtime allocations."
       },
       {
-        title: "Prompt-Aware Batch Scheduling",
-        explanation: "Configured max_num_batched_tokens and continuous batching so that long document prompts and short iterative prompts were co-scheduled efficiently, keeping TTFT (time-to-first-token) predictable."
+        title: "Chunked Prefill Scheduling",
+        explanation: "Enforced chunked prefill thresholds to break massive document prompts into bounded token chunks, interleaving prefill computation with active decode passes and eliminating TTFT latency spikes."
       }
     ],
     results: [
-      "Expanded practical usable context length from ~22K to ~40K tokens without OOM crashes.",
-      "Served concurrent batches of 10–20 requests with aggregate throughput reaching ~750 output tokens/second.",
-      "Maintained stable continuous uptime within a tight ~15 GB VRAM footprint on consumer-class 16 GB Blackwell hardware."
+      "Substantially increased effective sequence capacity and concurrency without memory aborts.",
+      "Maintained stable continuous throughput across high-concurrency burst workloads.",
+      "Preserved predictable latency profiles under mixed prefill/decode traffic."
     ],
-    failureModesAndDebugging: "During initial rollout, sudden bursts of 35K+ token prompts caused KV-cache block starvation, resulting in request queuing spikes. We diagnosed this using vLLM Prometheus metrics, uncovering that prefill chunks were holding allocations too long. We adjusted chunked prefill settings and tuned batch token ceilings to maintain steady streaming throughput.",
-    tradeoffs: "FP8 KV cache introduces slight precision trade-offs in extreme mathematical reasoning, but for long-form document synthesis, extraction, and summarization, benchmark perplexity remained virtually identical to FP16.",
-    futureImprovements: "Evaluate dynamic speculative decoding with a 1B draft model to further boost single-stream token generation speeds without increasing VRAM consumption."
+    failureModesAndDebugging: "During stress testing, bursty long prompts initially caused KV-cache block exhaustion under rapid arrival rates. By profiling the execution using Prometheus metrics, we identified that prefill chunks were holding allocations excessively. Tuning batch token ceilings and max sequence limits resolved the bottleneck.",
+    tradeoffs: "FP8 KV caching requires careful validation on needle-in-a-haystack tasks, but yields substantial gains in hardware efficiency and throughput.",
+    futureImprovements: "Evaluate dynamic speculative decoding with small draft models to further optimize single-stream token generation latency."
   },
   {
     id: "indian-navy-platform",
     slug: "indian-navy-platform",
-    title: "Secure Air-Gapped Document Intelligence Platform",
+    title: "Sovereign Air-Gapped Document Intelligence Platform",
     subtitle: "Architecting a multi-service on-premise local-LLM platform for defense document intelligence and operational decision support",
     category: "Defense & Air-Gap",
     role: "AI Engineer",
@@ -85,10 +85,10 @@ export const caseStudies: CaseStudy[] = [
     isConfidential: true,
     publicSafeNotice: "Architecture and operational patterns discussed at a public-safe systems level. Specific defense operational data, internal networks, and proprietary assets are omitted.",
     metrics: [
-      { label: "Microservices", value: "5+ Dockerized" },
-      { label: "Cloud Dependencies", value: "0 (Air-Gapped)" },
-      { label: "On-Site Deployments", value: "3 Trips (Mumbai)" },
-      { label: "Availability", value: "High Uptime" }
+      { label: "Architecture", value: "5+ Docker Services" },
+      { label: "Network Egress", value: "Zero (Air-Gapped)" },
+      { label: "On-Site Rollouts", value: "3 Trips (Mumbai)" },
+      { label: "Serving", value: "Local vLLM / OCR" }
     ],
     tags: ["Air-Gapped Ops", "Docker Compose", "RabbitMQ", "vLLM", "MongoDB", "MinIO", "OCR", "FastAPI"],
     context: "The Indian Navy required an end-to-end intelligent platform to ingest, index, synthesize, and query massive volumes of operational documents, reports, and legacy maritime files. The system evolved from initial RAG experiments into a sovereign, secure on-premise local-LLM decision support platform.",
@@ -97,7 +97,7 @@ export const caseStudies: CaseStudy[] = [
       "Heavy Ingestion Burden: Continuous streams of dense scanned PDFs, structured records, and multi-page technical manuals requiring OCR.",
       "High Reliability: Must run autonomously without frequent manual DevOps intervention or remote debugging access."
     ],
-    whyStandardFailed: "Standard cloud-hosted RAG platforms (OpenAI, AWS Bedrock) were legally and architecturally unusable due to sovereign defense data policies. Furthermore, naive single-container Python prototypes crashed during heavy batch document ingestion and could not handle concurrent OCR + LLM inference.",
+    whyStandardFailed: "Standard cloud-hosted RAG platforms were legally and architecturally unusable due to sovereign defense data policies. Furthermore, naive single-container Python prototypes crashed during heavy batch document ingestion and could not handle concurrent OCR + LLM inference.",
     architectureSummary: "Decomposed the system into an asynchronous microservices platform deployed via hardened Docker Compose: Ingestion & OCR Service, RabbitMQ message broker for decoupled task distribution, MongoDB for operational metadata and timelines, MinIO for S3-compatible local object storage, a local vLLM model serving engine, and a FastAPI orchestration API.",
     keyDecisions: [
       {
@@ -125,8 +125,8 @@ export const caseStudies: CaseStudy[] = [
   {
     id: "salesforce-saql-analytics",
     slug: "salesforce-saql-analytics",
-    title: "When RAG Is the Wrong Tool: Rebuilding Analytics Around SAQL",
-    subtitle: "Replacing inaccurate RAG with schema-grounded executable query generation over Salesforce Einstein Analytics",
+    title: "Deterministic Enterprise Analytics: Replacing RAG with Executable SAQL",
+    subtitle: "Replacing probabilistic vector similarity with schema-grounded query synthesis over Salesforce Einstein Analytics",
     category: "Enterprise AI",
     role: "Independent AI Engineer — Consulting",
     organization: "LeanAgile Nautics / Upwork",
@@ -134,9 +134,9 @@ export const caseStudies: CaseStudy[] = [
     isConfidential: false,
     metrics: [
       { label: "Math Accuracy", value: "100% Deterministic" },
-      { label: "Hallucinations", value: "0 on Aggregations" },
-      { label: "Query Speed", value: "Sub-second API" },
-      { label: "End-to-End Ownership", value: "Architecture to Prod" }
+      { label: "Validation", value: "AST Schema Guardrails" },
+      { label: "Execution Engine", value: "System of Record" },
+      { label: "Ownership", value: "Architecture to Prod" }
     ],
     tags: ["Salesforce SAQL", "FastAPI", "Intent Routing", "Query Validation", "Deterministic AI", "Enterprise"],
     context: "An enterprise logistics client needed a conversational assistant to answer complex numerical business intelligence questions over millions of enterprise records in Salesforce Einstein Analytics (CRM Analytics).",
@@ -183,8 +183,9 @@ export const caseStudies: CaseStudy[] = [
     publicSafeNotice: "Conceptual and architectural patterns demonstrated; operational records sanitized.",
     metrics: [
       { label: "Provenance", value: "Exact Page Spans" },
-      { label: "Revision Handling", value: "Superseding Semantics" },
-      { label: "Temporal Accuracy", value: "Timeline-Aware" }
+      { label: "Revision Semantics", value: "Temporal Graph" },
+      { label: "Resolution", value: "Automated Checks" },
+      { label: "Audit Trail", value: "Full Historical Lineage" }
     ],
     tags: ["Knowledge Representation", "Temporal Reasoning", "OCR", "Evidence Grounding", "Revision Semantics"],
     context: "In intelligence and legal operations, documents are published chronologically. An operational status report from March can be amended or completely superseded by an order issued in July. Standard vector stores treat all text chunks as equally valid, causing LLMs to generate contradictory answers.",
@@ -221,7 +222,7 @@ export const caseStudies: CaseStudy[] = [
   {
     id: "inkwell-desktop-ide",
     slug: "inkwell-desktop-ide",
-    title: "Inkwell: Local-First AI Desktop IDE for Technical PDFs",
+    title: "Inkwell: Local-First Desktop Architecture with Auditable AI Transactions",
     subtitle: "Auditable AI actions, exact PDF text rectangle grounding, and local vLLM routing built with Tauri 2, Rust & React 19",
     category: "Local-First Desktop",
     role: "Lead Architect & Developer",
@@ -229,10 +230,10 @@ export const caseStudies: CaseStudy[] = [
     period: "Jun 2026 – Present",
     isConfidential: false,
     metrics: [
-      { label: "Stack", value: "Tauri 2 + Rust + React 19" },
-      { label: "Storage", value: "SQLite WAL + Atomic Commits" },
-      { label: "Tool Server", value: "Read-Only MCP Server" },
-      { label: "Inference", value: "Local vLLM / Qwen" }
+      { label: "Core Runtime", value: "Tauri 2 + Rust" },
+      { label: "State Engine", value: "SQLite WAL Transactions" },
+      { label: "Interoperability", value: "Read-Only MCP Server" },
+      { label: "Privacy", value: "100% Local Inference" }
     ],
     tags: ["Tauri 2", "Rust", "React 19", "SQLite WAL", "PDFium", "vLLM", "MCP", "Local-First"],
     context: "Engineers and researchers spend countless hours reading complex technical papers, manuals, and books. Inkwell is an evidence-backed desktop IDE that treats AI actions as auditable, reversible software operations rather than magical, unpredictable mutations.",
