@@ -27,22 +27,23 @@ export const blogPosts: BlogPost[] = [
 
 In modern generative AI infrastructure, deploying large language models efficiently is rarely about peak theoretical FLOPs. In production serving environments, the primary constraint is almost always **GPU memory bandwidth and dynamic VRAM allocation**.
 
-While running single-prompt inference using naive frameworks is trivial, building a high-concurrency serving system that sustains hundreds of requests per second under unpredictable prompt lengths requires moving deep into the runtime architecture.
+While running single-prompt inference using naive frameworks is trivial, building a high-concurrency serving system that sustains hundreds of requests per second under unpredictable prompt lengths requires moving deep into the runtime architecture [1].
 
 In this deep dive, we examine the core mechanics that govern high-throughput LLM engines like **vLLM**:
-1. **The Dual-Phase Nature of LLM Inference**: Compute-bound prefill vs. memory-bandwidth-bound decoding.
-2. **PagedAttention & Virtual Memory Allocation**: Eliminating internal and external fragmentation.
-3. **KV Cache Memory Math**: Evaluating FP16 vs. calibrated FP8 quantization dynamics.
-4. **Chunked Prefill & Continuous Batch Scheduling**: Preventing Time-To-First-Token (TTFT) starvation.
+1. [Prefill vs. Decode Execution Dynamics](#cpt1)
+2. [Memory Fragmentation & PagedAttention](#cpt2)
+3. [The Memory Math: Why KV Cache Quantization (FP8) Matters](#cpt3)
+4. [Chunked Prefill & Continuous Batch Scheduling](#cpt4)
+5. [Production Takeaways & References](#cpt5)
 
 ---
 
 > 📝 **Systems Architecture Note**
-> Analysis is framed around production serving engines (vLLM, TensorRT-LLM) running under concurrent batch workloads where request lengths vary dynamically across users.
+> Analysis is framed around production serving engines (vLLM [1], TensorRT-LLM [4]) running under concurrent batch workloads where sequence lengths vary dynamically across users.
 
 ---
 
-## 1. The Dual Execution Phases: Prefill vs. Decode
+<h2 id="cpt1">1. The Dual Execution Phases: Prefill vs. Decode</h2>
 
 Every autoregressive transformer request proceeds through two distinct computational phases:
 
@@ -69,7 +70,7 @@ Modern serving engines solve this via **Continuous (Iteration-Level) Batching**:
 
 ---
 
-## 2. Memory Fragmentation & PagedAttention
+<h2 id="cpt2">2. Memory Fragmentation & PagedAttention</h2>
 
 In traditional serving implementations, KV cache memory must be pre-allocated contiguously based on the model's theoretical maximum context length (e.g., 32,768 tokens). This causes severe issues:
 
@@ -85,66 +86,54 @@ Logical Cache:  [Block 0 (16 tok)] -> [Block 1 (16 tok)] -> [Block 2 (16 tok)]
 Physical VRAM:  [Block 1 @ VRAM 0x4F] [Block 0 @ VRAM 0x1A] [Block 2 @ VRAM 0x8C] ✅ 0% Waste!
 \`\`\`
 
-Inspired by virtual memory paging in operating systems, **PagedAttention** partitions each sequence's KV cache into fixed-size physical memory blocks (typically 16 or 32 tokens). Blocks do not need to be contiguous in physical memory; a block lookup table maps logical token positions to physical GPU memory addresses.
+Inspired by virtual memory paging in operating systems, **PagedAttention** [1] partitions each sequence's KV cache into fixed-size physical memory blocks (typically 16 or 32 tokens). Blocks do not need to be contiguous in physical memory; a block lookup table maps logical token positions to physical GPU memory addresses.
 
 This eliminates internal fragmentation, bringing memory waste down to less than 4% (only the tail of the final block).
 
 ---
 
-## 3. The Memory Math: Why KV Cache Quantization (FP8) Matters
+<h2 id="cpt3">3. The Memory Math: Why KV Cache Quantization (FP8) Matters</h2>
 
 Let us inspect the exact memory scaling of the KV cache across transformer attention layers.
 
-\`\`\`
-KV Cache Memory Formula:
-Bytes per token = 2 × L × H_kv × D_head × B
+For any transformer model, the memory consumed per token across all layers is given by:
+
+$$ \text{Bytes per token} = 2 \times L \times H_{\text{kv}} \times D_{\text{head}} \times B $$
 
 Where:
-  L      = Number of transformer layers
-  H_kv   = Number of Key/Value attention heads
-  D_head = Dimension of each attention head
-  B      = Precision bytes per element (2 for FP16/BF16, 1 for FP8)
-\`\`\`
+- $L$: number of transformer layers
+- $H_{\text{kv}}$: number of Key/Value attention heads (Grouped-Query Attention)
+- $D_{\text{head}}$: dimension of each attention head
+- $B$: precision bytes per element ($B = 2$ for standard FP16/BF16, $B = 1$ for FP8)
 
-Let's evaluate this on a standard 8-billion parameter model:
-- **Layers (L)**: 36
-- **KV Heads (H_kv)**: 8
-- **Head Dimension (D_head)**: 128
+Let's evaluate this on an 8-billion parameter model ($L = 36$, $H_{\text{kv}} = 8$, $D_{\text{head}} = 128$):
 
-### Standard FP16 (B = 2 bytes per element):
-\`\`\`
-Bytes per token = 2 × 36 × 8 × 128 × 2
-                = 147,456 bytes
-                ≈ 144 KB per token
-\`\`\`
+### Standard FP16 ($B = 2$ bytes):
 
-At a context length of **32,000 tokens for a single request**:
-\`\`\`
-32,000 tokens × 144 KB/token ≈ 4.61 GB of KV Cache
-\`\`\`
+$$ \text{Bytes per token} = 2 \times 36 \times 8 \times 128 \times 2 = 147{,}456 \text{ bytes} \approx 144 \text{ KB/token} $$
+
+For a single **32,000-token context**:
+
+$$ 32{,}000 \times 144 \text{ KB} \approx 4.61 \text{ GB of KV Cache} $$
 
 If you serve **4 concurrent long-context requests**:
-\`\`\`
-4 requests × 4.61 GB = 18.44 GB of KV Cache alone!
-\`\`\`
+
+$$ 4 \times 4.61 \text{ GB} = 18.44 \text{ GB of KV Cache alone!} $$
 
 Combined with model weights (~16 GB in FP16), the total requirement is **>34 GB of VRAM**. A single 24 GB or 16 GB workstation GPU crashes instantly with CUDA Out-Of-Memory!
 
-### Calibrated FP8 KV Cache (B = 1 byte per element):
-\`\`\`
-Bytes per token = 2 × 36 × 8 × 128 × 1
-                = 73,728 bytes
-                ≈ 72 KB per token (Exact 50% Reduction)
-\`\`\`
+### Calibrated FP8 KV Cache ($B = 1$ byte):
+
+$$ \text{Bytes per token} = 2 \times 36 \times 8 \times 128 \times 1 = 73{,}728 \text{ bytes} \approx 72 \text{ KB/token} $$
 
 By quantizing the KV cache to 8-bit precision (e.g., using FP8 \`e4m3fn\` with scale factors):
-- Memory per token is cut in half.
+- Memory per token is cut exactly in half.
 - 32,000 tokens require only **2.30 GB**.
 - You can pack **twice as many concurrent active sequences** into the exact same physical VRAM footprint without degrading attention retrieval accuracy.
 
 ---
 
-## 4. Chunked Prefill: Solving TTFT Starvation
+<h2 id="cpt4">4. Chunked Prefill: Solving TTFT Starvation</h2>
 
 When high concurrency traffic hits a serving engine, a fundamental conflict arises:
 - **Decode requests** want low latency (quick continuous token generation).
@@ -167,11 +156,20 @@ By configuring **Chunked Prefill**, long prompts are partitioned into bounded ch
 
 ---
 
-## 5. Architectural Summary & Production Takeaways
+<h2 id="cpt5">5. Architectural Summary & Production Takeaways</h2>
 
 1. **Memory Capacity Dictates Concurrency**: In high-throughput serving, model weights are static; KV cache scaling determines your throughput ceiling.
 2. **Quantize the Cache, Not Just Weights**: While weight quantization reduces loading size, KV cache quantization (FP8 KV) directly unlocks higher concurrency.
 3. **Co-Schedule Prefill and Decode**: Use chunked prefill to maintain deterministic latency SLAs across mixed long-document and conversational traffic.
+
+---
+
+### References
+
+- <span id="ref-1">**[1]**</span> Kwon et al., *"Efficient Memory Management for Large Language Model Serving with PagedAttention"*, SOSP 2023. [Paper](https://arxiv.org/abs/2309.06180)
+- <span id="ref-2">**[2]**</span> Dao, *"FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning"*, 2023. [Paper](https://arxiv.org/abs/2307.08691)
+- <span id="ref-3">**[3]**</span> DeepSeek-AI, *"DeepSeek-V3 Technical Report: Multi-Head Latent Attention & Multi-Token Prediction"*, 2024. [Paper](https://arxiv.org/abs/2412.19437)
+- <span id="ref-4">**[4]**</span> NVIDIA Corporation, *"TensorRT-LLM: High-Performance GPU Inference Architecture"*, 2024. [Documentation](https://github.com/NVIDIA/TensorRT-LLM)
     `
   },
   {
