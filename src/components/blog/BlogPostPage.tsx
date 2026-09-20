@@ -300,6 +300,43 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
             remarkPlugins={[remarkGfm, remarkMath]}
             rehypePlugins={[rehypeKatex]}
             components={{
+              // Custom Headings with anchor IDs
+              h2({ children }) {
+                const text = String(children);
+                const id = text.startsWith('1.') ? 'cpt1' :
+                           text.startsWith('2.') ? 'cpt2' :
+                           text.startsWith('3.') ? 'cpt3' :
+                           text.startsWith('4.') ? 'cpt4' :
+                           text.startsWith('5.') ? 'cpt5' :
+                           text.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+                return (
+                  <h2 id={id} style={{
+                    fontSize: '1.85rem',
+                    fontWeight: 700,
+                    marginTop: '2.75rem',
+                    marginBottom: '1rem',
+                    color: 'var(--text-primary)',
+                    letterSpacing: '-0.02em',
+                    scrollMarginTop: '5rem'
+                  }}>
+                    {children}
+                  </h2>
+                );
+              },
+              h3({ children }) {
+                return (
+                  <h3 style={{
+                    fontSize: '1.35rem',
+                    fontWeight: 600,
+                    marginTop: '2rem',
+                    marginBottom: '0.75rem',
+                    color: 'var(--text-primary)',
+                    scrollMarginTop: '5rem'
+                  }}>
+                    {children}
+                  </h3>
+                );
+              },
               // Custom Blockquote (Aleksa Gordic Callout styling)
               blockquote({ children }) {
                 return (

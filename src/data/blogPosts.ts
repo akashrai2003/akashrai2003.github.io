@@ -43,7 +43,7 @@ In this deep dive, we examine the core mechanics that govern high-throughput LLM
 
 ---
 
-<h2 id="cpt1">1. The Dual Execution Phases: Prefill vs. Decode</h2>
+## 1. The Dual Execution Phases: Prefill vs. Decode
 
 Every autoregressive transformer request proceeds through two distinct computational phases:
 
@@ -70,7 +70,7 @@ Modern serving engines solve this via **Continuous (Iteration-Level) Batching**:
 
 ---
 
-<h2 id="cpt2">2. Memory Fragmentation & PagedAttention</h2>
+## 2. Memory Fragmentation & PagedAttention
 
 In traditional serving implementations, KV cache memory must be pre-allocated contiguously based on the model's theoretical maximum context length (e.g., 32,768 tokens). This causes severe issues:
 
@@ -92,39 +92,39 @@ This eliminates internal fragmentation, bringing memory waste down to less than 
 
 ---
 
-<h2 id="cpt3">3. The Memory Math: Why KV Cache Quantization (FP8) Matters</h2>
+## 3. The Memory Math: Why KV Cache Quantization (FP8) Matters
 
 Let us inspect the exact memory scaling of the KV cache across transformer attention layers.
 
 For any transformer model, the memory consumed per token across all layers is given by:
 
-$$ \text{Bytes per token} = 2 \times L \times H_{\text{kv}} \times D_{\text{head}} \times B $$
+$$ \\text{Bytes per token} = 2 \\times L \\times H_{\\text{kv}} \\times D_{\\text{head}} \\times B $$
 
 Where:
 - $L$: number of transformer layers
-- $H_{\text{kv}}$: number of Key/Value attention heads (Grouped-Query Attention)
-- $D_{\text{head}}$: dimension of each attention head
+- $H_{\\text{kv}}$: number of Key/Value attention heads (Grouped-Query Attention)
+- $D_{\\text{head}}$: dimension of each attention head
 - $B$: precision bytes per element ($B = 2$ for standard FP16/BF16, $B = 1$ for FP8)
 
-Let's evaluate this on an 8-billion parameter model ($L = 36$, $H_{\text{kv}} = 8$, $D_{\text{head}} = 128$):
+Let's evaluate this on an 8-billion parameter model ($L = 36$, $H_{\\text{kv}} = 8$, $D_{\\text{head}} = 128$):
 
 ### Standard FP16 ($B = 2$ bytes):
 
-$$ \text{Bytes per token} = 2 \times 36 \times 8 \times 128 \times 2 = 147{,}456 \text{ bytes} \approx 144 \text{ KB/token} $$
+$$ \\text{Bytes per token} = 2 \\times 36 \\times 8 \\times 128 \\times 2 = 147{,}456 \\text{ bytes} \\approx 144 \\text{ KB/token} $$
 
 For a single **32,000-token context**:
 
-$$ 32{,}000 \times 144 \text{ KB} \approx 4.61 \text{ GB of KV Cache} $$
+$$ 32{,}000 \\times 144 \\text{ KB} \\approx 4.61 \\text{ GB of KV Cache} $$
 
 If you serve **4 concurrent long-context requests**:
 
-$$ 4 \times 4.61 \text{ GB} = 18.44 \text{ GB of KV Cache alone!} $$
+$$ 4 \\times 4.61 \\text{ GB} = 18.44 \\text{ GB of KV Cache alone!} $$
 
 Combined with model weights (~16 GB in FP16), the total requirement is **>34 GB of VRAM**. A single 24 GB or 16 GB workstation GPU crashes instantly with CUDA Out-Of-Memory!
 
 ### Calibrated FP8 KV Cache ($B = 1$ byte):
 
-$$ \text{Bytes per token} = 2 \times 36 \times 8 \times 128 \times 1 = 73{,}728 \text{ bytes} \approx 72 \text{ KB/token} $$
+$$ \\text{Bytes per token} = 2 \\times 36 \\times 8 \\times 128 \\times 1 = 73{,}728 \\text{ bytes} \\approx 72 \\text{ KB/token} $$
 
 By quantizing the KV cache to 8-bit precision (e.g., using FP8 \`e4m3fn\` with scale factors):
 - Memory per token is cut exactly in half.
@@ -133,7 +133,7 @@ By quantizing the KV cache to 8-bit precision (e.g., using FP8 \`e4m3fn\` with s
 
 ---
 
-<h2 id="cpt4">4. Chunked Prefill: Solving TTFT Starvation</h2>
+## 4. Chunked Prefill: Solving TTFT Starvation
 
 When high concurrency traffic hits a serving engine, a fundamental conflict arises:
 - **Decode requests** want low latency (quick continuous token generation).
@@ -156,7 +156,7 @@ By configuring **Chunked Prefill**, long prompts are partitioned into bounded ch
 
 ---
 
-<h2 id="cpt5">5. Architectural Summary & Production Takeaways</h2>
+## 5. Architectural Summary & Production Takeaways
 
 1. **Memory Capacity Dictates Concurrency**: In high-throughput serving, model weights are static; KV cache scaling determines your throughput ceiling.
 2. **Quantize the Cache, Not Just Weights**: While weight quantization reduces loading size, KV cache quantization (FP8 KV) directly unlocks higher concurrency.
