@@ -50,27 +50,27 @@ const CodeBlock: React.FC<{
       overflow: 'hidden',
       border: '1px solid var(--border-card)',
       background: 'var(--bg-card-solid)',
-      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)'
+      boxShadow: 'var(--shadow-card)'
     }}>
       {/* Code Header Bar */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0.5rem 1rem',
-        background: 'rgba(255, 255, 255, 0.03)',
+        padding: '0.6rem 1rem',
+        background: 'var(--bg-subtle)',
         borderBottom: '1px solid var(--border-subtle)',
         fontSize: '0.78rem',
         fontFamily: 'var(--font-mono)',
         color: 'var(--text-tertiary)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <div style={{ display: 'flex', gap: '0.3rem' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444' }} />
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#eab308' }} />
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e' }} />
+          <div style={{ display: 'flex', gap: '0.35rem' }}>
+            <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#ef4444' }} />
+            <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#eab308' }} />
+            <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#22c55e' }} />
           </div>
-          <span style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
+          <span style={{ textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700, color: 'var(--text-secondary)' }}>
             {language || 'code'}
           </span>
         </div>
@@ -88,6 +88,7 @@ const CodeBlock: React.FC<{
             cursor: 'pointer',
             fontSize: '0.75rem',
             fontFamily: 'var(--font-mono)',
+            fontWeight: 600,
             padding: '0.2rem 0.5rem',
             borderRadius: 'var(--radius-sm)',
             transition: 'color var(--transition-fast)'
@@ -103,13 +104,15 @@ const CodeBlock: React.FC<{
         padding: '1.25rem 1.25rem',
         overflowX: 'auto',
         fontFamily: 'var(--font-mono)',
-        fontSize: '0.88rem',
-        lineHeight: 1.65,
-        color: '#e2e8f0',
-        background: '#070b14'
+        fontSize: '0.9rem',
+        lineHeight: 1.7,
+        color: 'var(--text-primary)',
+        background: 'var(--code-bg)'
       }}>
-        <pre style={{ margin: 0, background: 'transparent', border: 'none', padding: 0 }}>
-          <code>{children}</code>
+        <pre style={{ margin: 0, background: 'transparent', border: 'none', padding: 0, overflow: 'visible' }}>
+          <code style={{ color: 'var(--text-primary)', background: 'transparent', padding: 0, border: 'none', fontFamily: 'inherit' }}>
+            {children}
+          </code>
         </pre>
       </div>
     </div>
@@ -198,7 +201,7 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
             onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
           >
             <ArrowLeft size={16} />
-            <span>← Back to all writing</span>
+            <span>Back to all writing</span>
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -357,19 +360,25 @@ export const BlogPostPage: React.FC<BlogPostPageProps> = ({
                   </div>
                 );
               },
-              // Code Block with syntax styling & copy button
-              code({ node, inline, className, children, ...props }: any) {
-                if (inline) {
+              // Pre wrapper: bypass default pre so CodeBlock controls terminal container
+              pre({ children }) {
+                return <>{children}</>;
+              },
+              // Code element: properly distinguishes inline badges from multi-line code blocks
+              code({ node, className, children, ...props }: any) {
+                const isBlock = Boolean(className && /language-/.test(className)) || String(children).includes('\n');
+                if (!isBlock) {
                   return (
                     <code
                       style={{
-                        background: 'rgba(56, 189, 248, 0.1)',
+                        background: 'var(--accent-cyan-subtle)',
                         color: 'var(--accent-cyan)',
-                        padding: '0.15rem 0.4rem',
+                        padding: '0.15rem 0.45rem',
                         borderRadius: '4px',
                         fontSize: '0.88em',
                         fontFamily: 'var(--font-mono)',
-                        border: '1px solid rgba(56, 189, 248, 0.2)'
+                        border: '1px solid rgba(56, 189, 248, 0.25)',
+                        fontWeight: 600
                       }}
                       {...props}
                     >

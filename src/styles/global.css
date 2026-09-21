@@ -388,7 +388,7 @@ code, pre {
   background: transparent;
   border: none;
   padding: 0;
-  color: var(--text-primary);
+  color: inherit;
 }
 
 .prose table {
