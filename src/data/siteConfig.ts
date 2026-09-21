@@ -19,10 +19,10 @@ export interface SiteConfig {
 
 export const siteConfig: SiteConfig = {
   name: "Akash Rai",
-  role: "AI Systems & Inference Engineer",
-  headline: "Architecting high-throughput LLM serving infrastructure, sovereign AI platforms, and deterministic agentic systems.",
-  subheadline: "I bridge applied AI and systems engineering: optimizing open-weight inference engines (vLLM, PagedAttention, FP8 quantization), designing sovereign air-gapped document intelligence platforms, and building deterministic execution pipelines over systems of record.",
-  status: "Open for AI Systems & Inference Engineering Roles",
+  role: "AI Systems & GenAI Application Engineer",
+  headline: "Building high-throughput inference pipelines, sovereign air-gapped platforms, and deterministic agentic systems in Python.",
+  subheadline: "I engineer practical GenAI systems: from multi-service agentic workflows and sovereign air-gapped deployments, to hands-on vLLM inference optimizations (PagedAttention, FP8 KV cache, chunked prefill)—while passionately learning the low-level systems stack from scratch.",
+  status: "Open for AI Systems & GenAI Engineering Roles",
   location: "Bengaluru, India (Open to Remote)",
   email: "akashtooop@gmail.com",
   phone: "+91 8097253859",

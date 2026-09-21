@@ -3,64 +3,62 @@ export interface SkillCategory {
   description: string;
   skills: Array<{
     name: string;
-    level: "Core" | "Advanced" | "Production";
+    level: "Core" | "Advanced" | "Production" | "Learning";
     context: string;
   }>;
 }
 
 export const skillCategories: SkillCategory[] = [
   {
-    category: "LLM Systems & Inference",
-    description: "Open-weight model serving, quantization, kernel optimization, and GPU memory budgeting",
+    category: "LLM Systems & Inference Optimization",
+    description: "Hands-on model serving, memory budgeting, quantization, and GPU workstation orchestration",
     skills: [
-      { name: "vLLM", level: "Production", context: "Ministral-3-8B, Gemma-4-12B, Qwen3-9B serving with custom configs" },
-      { name: "FP8 / NVFP4 Quantization", level: "Advanced", context: "SM120 Blackwell compatibility, FP8 KV cache, weight quantization" },
-      { name: "KV Cache & PagedAttention", level: "Production", context: "VRAM budgeting, max-model-len, max-num-seqs tuning" },
-      { name: "CUDA 12.9 / FlashInfer", level: "Advanced", context: "Resolving JIT compilation, CUTLASS kernels, and hardware builds" },
-      { name: "CuPy", level: "Production", context: "GPU-accelerated gRPC classifier microservice without PyTorch bloat" },
-      { name: "PEFT / LoRA / DAPT", level: "Advanced", context: "Domain-adaptive pretraining on 4× L40S GPUs with curated corpora" }
+      { name: "vLLM Serving", level: "Production", context: "Serving Ministral, Gemma, and Qwen models with custom memory and batching parameters" },
+      { name: "PagedAttention & Memory Budgeting", level: "Production", context: "Tuning max-model-len, max-num-seqs, and VRAM ceilings to prevent OOM errors" },
+      { name: "FP8 KV Caching & Quantization", level: "Advanced", context: "Configuring FP8 KV cache allocations and 8-bit weight quantization to double concurrency" },
+      { name: "Chunked Prefill Scheduling", level: "Advanced", context: "Mitigating TTFT spikes by interleaving prompt chunking with decode cycles" },
+      { name: "Containerized GPU Workstations", level: "Production", context: "Packaging vLLM, drivers, and models inside isolated Docker environments" },
+      { name: "PEFT / LoRA Fine-Tuning", level: "Advanced", context: "Domain adaptation benchmarks on multi-GPU instances using curated domain corpora" }
     ]
   },
   {
-    category: "Retrieval & Grounded Knowledge",
-    description: "Multi-stage retrieval pipelines, deterministic query generation, and knowledge graphs",
+    category: "Languages & Frameworks",
+    description: "Core programming languages and frameworks used in daily production engineering",
     skills: [
-      { name: "RAG & Reranking", level: "Production", context: "Cascading dense retrieval + cross-encoder reranking, context selection" },
-      { name: "Salesforce SAQL Generation", level: "Production", context: "Executable queries replacing naive RAG for accurate enterprise metrics" },
-      { name: "Neo4j Knowledge Graphs", level: "Production", context: "Graph relationships + vector embeddings hybrid retrieval" },
-      { name: "Evidence-Backed Memory", level: "Production", context: "Temporal OCR timeline extraction with revision and update semantics" },
-      { name: "Vector Stores", level: "Production", context: "Pinecone, sqlite-vec, MongoDB vector search, MySQL metadata indexing" }
+      { name: "Python (Core Language)", level: "Production", context: "Primary language for ML systems, inference pipelines, backend services, and automation" },
+      { name: "PyTorch & CuPy", level: "Production", context: "Model loading, tensor manipulations, and lightweight GPU-accelerated microservices" },
+      { name: "FastAPI", level: "Production", context: "High-throughput asynchronous APIs, typed schemas, and OpenAI-compatible streaming endpoints" },
+      { name: "React & TypeScript", level: "Advanced", context: "Interactive web interfaces and desktop UI development (Tauri/React)" },
+      { name: "Bash & Linux CLI", level: "Production", context: "Shell scripting, server management, and system monitoring" }
     ]
   },
   {
     category: "Agentic Workflows & Orchestration",
     description: "State-machine orchestration, tool execution, bounded autonomy, and spatial analysis",
     skills: [
-      { name: "LangGraph", level: "Production", context: "7-stage state machines with explicit transitions, validators, fallbacks" },
+      { name: "LangGraph", level: "Production", context: "Multi-stage state machines with explicit transitions, validators, and structured fallbacks" },
       { name: "Model Context Protocol (MCP)", level: "Production", context: "Scoped read-only tool servers without leaking host paths (Inkwell, SocialGraph)" },
-      { name: "Agentic Geospatial Analytics", level: "Production", context: "LLMs driving MBTiles playback and dynamic Vega-Lite charts" },
-      { name: "Deterministic Tool Interfaces", level: "Production", context: "Schema validation, bounded loops, structured recovery" }
+      { name: "Agentic Geospatial Analytics", level: "Production", context: "LLMs driving MBTiles playback and dynamic Vega-Lite analytical charts" },
+      { name: "Deterministic Tool Interfaces", level: "Production", context: "Schema validation, bounded execution loops, and error recovery" }
     ]
   },
   {
     category: "Backend & Systems Infrastructure",
     description: "Production microservices, messaging, air-gapped deployments, and storage",
     skills: [
-      { name: "FastAPI / gRPC", level: "Production", context: "High-throughput asynchronous APIs, typed schemas, gRPC services" },
       { name: "Docker & Docker Compose", level: "Production", context: "Multi-service air-gapped platform deployment and offline delivery" },
-      { name: "RabbitMQ & MinIO", level: "Production", context: "Job queues, asynchronous ingestion, object storage for OCR documents" },
-      { name: "MongoDB & MySQL", level: "Production", context: "Document storage, metadata indexing, high-performance querying" },
-      { name: "Linux & Air-Gapped Ops", level: "Production", context: "3 on-site deployments in Mumbai, offline dependency packaging" }
+      { name: "RabbitMQ & MinIO", level: "Production", context: "Job queues, asynchronous document ingestion, and S3-compatible storage" },
+      { name: "MongoDB & MySQL", level: "Production", context: "Document storage, metadata indexing, and high-performance querying" },
+      { name: "Sovereign Air-Gapped Ops", level: "Production", context: "3 on-site deployments in Mumbai with zero external internet access" },
+      { name: "Git & Open Source Workflow", level: "Production", context: "Merged PR #3262 in 12K★ kepler.gl, clean PRs, and CI/CD pipelines" }
     ]
   },
   {
-    category: "Local-First Desktop & Engineering",
-    description: "Native apps, PDF intelligence, graph analytics, and distributed experiments",
+    category: "Systems Learning Roadmap",
+    description: "Low-level systems and GPU programming actively being studied from first principles",
     skills: [
-      { name: "React 19 & TypeScript", level: "Production", context: "High-performance reactive interfaces, modern frontend architecture" },
-      { name: "Tauri 2 & Rust", level: "Advanced", context: "Local-first desktop IDE (Inkwell) with SQLite WAL and PDFium" },
-      { name: "Python / C++", level: "Production", context: "Core programming languages for ML, backend, and numerical computing" },
-      { name: "NetworkX / Leiden", level: "Advanced", context: "Community detection and graph analytics in SocialGraph" }
+      { name: "C++ Systems Programming", level: "Learning", context: "Starting from scratch to understand runtime execution and build low-level inference backends" },
+      { name: "CUDA & GPU Architecture", level: "Learning", context: "Actively studying thread block scheduling, shared memory hierarchies, and kernel execution" }
     ]
   }
 ];

@@ -173,7 +173,7 @@ export const InteractiveTerminal: React.FC<InteractiveTerminalProps> = ({
                   📁 stack/
                 </span>
                 <span style={{ color: 'var(--text-tertiary)', marginLeft: '0.75rem', fontSize: '0.85rem' }}>
-                  — CUDA, C++, Triton, vLLM, TensorRT-LLM, PyTorch matrix
+                  — Python, vLLM, PyTorch, FastAPI, Docker, and systems learning roadmap
                 </span>
               </div>
 
@@ -247,14 +247,14 @@ export const InteractiveTerminal: React.FC<InteractiveTerminalProps> = ({
               <div><strong style={{ color: 'var(--text-primary)' }}>Identity:</strong> {siteConfig.name}</div>
               <div><strong style={{ color: 'var(--text-primary)' }}>Role:</strong> {siteConfig.role}</div>
               <div><strong style={{ color: 'var(--text-primary)' }}>Location:</strong> {siteConfig.location}</div>
-              <div><strong style={{ color: 'var(--text-primary)' }}>Core:</strong> vLLM, PagedAttention, FlashInfer, Blackwell SM120, TensorRT-LLM, Sovereign Air-Gapped AI</div>
+              <div><strong style={{ color: 'var(--text-primary)' }}>Core:</strong> Python, vLLM, PagedAttention, FP8 KV Caching, FastAPI, Docker, Sovereign AI</div>
               <div><strong style={{ color: 'var(--text-primary)' }}>OSS:</strong> Kepler.gl PR #3262 (12,000+ stars)</div>
             </div>
           );
         } else if (['philosophy.txt', 'philosophy'].includes(file)) {
           result = (
             <div style={{ color: 'var(--text-primary)', fontStyle: 'italic' }}>
-              "first principles &gt;&gt; vibe coding • optimizing systems down to the bare metal"
+              "building practical AI systems • passionate about inference &amp; diving deeper into the bare metal"
             </div>
           );
         } else {
@@ -270,7 +270,7 @@ export const InteractiveTerminal: React.FC<InteractiveTerminalProps> = ({
       case 'whoami':
         result = (
           <div style={{ color: 'var(--text-primary)' }}>
-            akash — AI Systems & High-Throughput Inference Engineer (UID: 1000)
+            akash — AI Systems &amp; GenAI Application Engineer (UID: 1000)
           </div>
         );
         break;

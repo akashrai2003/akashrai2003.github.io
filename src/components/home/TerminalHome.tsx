@@ -65,7 +65,7 @@ export const TerminalHome: React.FC<TerminalHomeProps> = ({
             <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>echo $PHILOSOPHY</span>
           </div>
           <div style={{ color: 'var(--text-secondary)', paddingLeft: '0.85rem', fontStyle: 'italic' }}>
-            "first principles &gt;&gt; vibe coding • optimizing systems down to the bare metal"
+            "building practical AI systems • passionate about inference &amp; diving deeper into the bare metal"
           </div>
         </div>
 
@@ -79,7 +79,7 @@ export const TerminalHome: React.FC<TerminalHomeProps> = ({
           </div>
           <div style={{ paddingLeft: '0.85rem', lineHeight: 1.7, color: 'var(--text-secondary)' }}>
             <div style={{ marginBottom: '0.5rem' }}>
-              <span style={{ color: 'var(--accent-cyan)' }}>→ Currently:</span> AI Systems Engineer specializing in High-Throughput LLM Serving, Speculative Decoding, and Distributed Inference Engines.
+              <span style={{ color: 'var(--accent-cyan)' }}>→ Currently:</span> AI Systems &amp; GenAI Application Engineer building high-throughput inference pipelines, sovereign air-gapped platforms, and agentic workflows.
             </div>
 
             <div style={{ marginBottom: '0.5rem' }}>
@@ -87,12 +87,16 @@ export const TerminalHome: React.FC<TerminalHomeProps> = ({
               <div style={{ paddingLeft: '1.25rem', color: 'var(--text-secondary)' }}>
                 <div>├── <strong style={{ color: 'var(--text-primary)' }}>Sovereign AI for Indian Navy:</strong> Air-gapped platform across 5+ Docker microservices with zero external network egress</div>
                 <div>├── <strong style={{ color: 'var(--text-primary)' }}>Open Source (kepler.gl):</strong> Merged <a href="https://github.com/keplergl/kepler.gl/pull/3262" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-cyan)', textDecoration: 'underline' }}>PR #3262</a> resolving persistent state in 12K★ repository</div>
-                <div>└── <strong style={{ color: 'var(--text-primary)' }}>vLLM &amp; Hardware Engines:</strong> PagedAttention memory budgeting, chunked prefill, and CUTLASS/FlashInfer Blackwell SM120 compilation</div>
+                <div>└── <strong style={{ color: 'var(--text-primary)' }}>vLLM Inference Optimization:</strong> PagedAttention memory budgeting, chunked prefill, and containerized serving on modern GPUs</div>
               </div>
             </div>
 
             <div style={{ marginBottom: '0.5rem' }}>
-              <span style={{ color: 'var(--accent-cyan)' }}>→ Core Stack:</span> C++, CUDA 12.9, Python, PyTorch, vLLM, Triton, TensorRT-LLM, Docker, Linux Systems
+              <span style={{ color: 'var(--accent-cyan)' }}>→ Primary Stack:</span> Python, PyTorch, vLLM, FastAPI, Docker, Linux, LangGraph, SQL
+            </div>
+
+            <div style={{ marginBottom: '0.5rem' }}>
+              <span style={{ color: 'var(--accent-cyan)' }}>→ Learning Roadmap:</span> Starting C++ from scratch &amp; actively studying CUDA to master low-level inference runtimes from first principles
             </div>
 
             <div>

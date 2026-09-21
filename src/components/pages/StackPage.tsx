@@ -83,8 +83,15 @@ export const StackPage: React.FC<StackPageProps> = ({ onBackHome }) => {
                     <strong style={{ color: 'var(--text-primary)', fontSize: '0.92rem' }}>
                       {skill.name}
                     </strong>
-                    <span className="badge-tech" style={{ fontSize: '0.7rem' }}>
-                      {skill.level}
+                    <span
+                      className="badge-tech"
+                      style={{
+                        fontSize: '0.7rem',
+                        borderColor: skill.level === 'Learning' ? 'var(--accent-amber)' : undefined,
+                        color: skill.level === 'Learning' ? 'var(--accent-amber)' : undefined
+                      }}
+                    >
+                      {skill.level === 'Learning' ? 'Roadmap / Studying' : skill.level}
                     </span>
                   </div>
                   <div style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', lineHeight: 1.5 }}>

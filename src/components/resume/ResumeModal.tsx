@@ -147,10 +147,10 @@ export const ResumeModal: React.FC<ResumeModalProps> = ({ isOpen, onClose }) => 
 
           <div style={{ padding: '1rem', borderRadius: 'var(--radius-md)', background: 'var(--bg-subtle)', border: '1px solid var(--border-subtle)' }}>
             <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--accent-emerald)', marginBottom: '0.25rem' }}>
-              Hardware & Systems Specialization
+              Inference &amp; Systems Focus
             </div>
             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              vLLM, NVIDIA Blackwell SM120, FP8/NVFP4, CUDA 12.9, AMD MI300X
+              vLLM Serving, PagedAttention, FP8 Quantization, Docker Microservices
             </div>
           </div>
 
