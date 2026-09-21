@@ -2,6 +2,7 @@ import React from 'react';
 import { TerminalWindow } from '../terminal/TerminalWindow';
 import { AsciiHeader } from '../terminal/AsciiHeader';
 import { InteractiveTerminal } from '../terminal/InteractiveTerminal';
+import { Logo } from '../ui/Logo';
 import { siteConfig } from '../../data/siteConfig';
 
 interface TerminalHomeProps {
@@ -55,8 +56,13 @@ export const TerminalHome: React.FC<TerminalHomeProps> = ({
 
       {/* Primary Terminal Window Frame */}
       <TerminalWindow maxWidth="820px" title="akash@systems — bash — 80x24">
-        {/* ASCII Header Banner */}
-        <AsciiHeader />
+        {/* Logo & ASCII Header Banner */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <Logo size={62} />
+          <div style={{ flex: 1, minWidth: '220px' }}>
+            <AsciiHeader />
+          </div>
+        </div>
 
         {/* 1. Philosophy Command */}
         <div style={{ marginBottom: '1.5rem' }}>

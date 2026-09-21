@@ -8,6 +8,7 @@ import { ExperiencePage } from './components/pages/ExperiencePage';
 import { StackPage } from './components/pages/StackPage';
 import { ContactPage } from './components/pages/ContactPage';
 import { ResumeModal } from './components/resume/ResumeModal';
+import { Logo } from './components/ui/Logo';
 import { BlogPost, blogPosts } from './data/blogPosts';
 
 type ThemeMode = 'terminal' | 'cyan' | 'light';
@@ -136,9 +137,10 @@ export const App: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <span
               onClick={() => handleNavigate('home')}
-              style={{ color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700 }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem', color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700 }}
             >
-              akash@systems:~
+              <Logo size={24} />
+              <span>akash@systems:~</span>
             </span>
             <span style={{ color: 'var(--text-tertiary)' }}>/</span>
             <span style={{ color: 'var(--accent-cyan)' }}>{currentRoute}</span>

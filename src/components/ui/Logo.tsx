@@ -3,128 +3,137 @@ import React from 'react';
 interface LogoProps {
   size?: number;
   className?: string;
+  useImage?: boolean;
 }
 
-export const Logo: React.FC<LogoProps> = ({ size = 36, className = '' }) => {
+export const Logo: React.FC<LogoProps> = ({ size = 36, className = '', useImage = true }) => {
+  if (useImage) {
+    return (
+      <div
+        className={className}
+        style={{
+          width: size,
+          height: size,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: Math.max(6, Math.round(size * 0.16)),
+          overflow: 'hidden',
+          background: '#040804',
+          border: '1px solid var(--border-card)',
+          boxShadow: '0 0 16px var(--accent-cyan-glow), inset 0 0 8px rgba(0, 0, 0, 0.8)',
+          flexShrink: 0,
+          transition: 'all var(--transition-fast)'
+        }}
+        title="Akash Rai — Terminal Systems"
+      >
+        <img
+          src={`${import.meta.env.BASE_URL}logo.png`}
+          alt="Akash Rai Terminal Systems Logo"
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover'
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Pure SVG Vector Fallback / Scalable Render
   return (
-    <svg 
-      width={size} 
-      height={size} 
-      viewBox="0 0 44 44" 
-      fill="none" 
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 48 48"
+      fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
-      style={{ 
-        filter: 'drop-shadow(0 0 12px rgba(56, 189, 248, 0.45)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6))',
+      style={{
+        filter: 'drop-shadow(0 0 12px var(--accent-cyan-glow))',
         flexShrink: 0
       }}
     >
       <defs>
-        {/* Isometric Facet Gradients */}
-        <linearGradient id="logoFacetTop" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#818cf8" />
+        <linearGradient id="terminalLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="var(--text-primary)" />
+          <stop offset="100%" stopColor="#22c55e" />
         </linearGradient>
-        
-        <linearGradient id="logoFacetLeft" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#0284c7" />
-          <stop offset="100%" stopColor="#312e81" />
-        </linearGradient>
-
-        <linearGradient id="logoFacetRight" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#6366f1" />
-          <stop offset="100%" stopColor="#1e1b4b" />
-        </linearGradient>
-
-        {/* Neural Core Glowing Gradient */}
-        <linearGradient id="logoCoreBeam" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="40%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#c084fc" />
-        </linearGradient>
-
-        <radialGradient id="logoGlowCenter" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
-          <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
-        </radialGradient>
-
-        {/* Filter for glow */}
-        <filter id="tensorGlow" x="-20%" y="-20%" width="140%" height="140%">
+        <filter id="logoGlowFilter" x="-20%" y="-20%" width="140%" height="140%">
           <feGaussianBlur stdDeviation="1.5" result="blur" />
-          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
         </filter>
       </defs>
 
-      {/* Outer Hexagonal Shield Backdrop */}
-      <path 
-        d="M22 2.5L39 12.3V31.7L22 41.5L5 31.7V12.3L22 2.5Z" 
-        fill="#070c18" 
-        stroke="rgba(56, 189, 248, 0.3)" 
-        strokeWidth="1.2" 
+      {/* Silicon Die Boundary Frame */}
+      <rect
+        x="3"
+        y="3"
+        width="42"
+        height="42"
+        rx="7"
+        fill="var(--bg-card-solid)"
+        stroke="var(--text-primary)"
+        strokeWidth="1.2"
+        strokeOpacity="0.4"
+      />
+      <rect
+        x="6"
+        y="6"
+        width="36"
+        height="36"
+        rx="4"
+        fill="none"
+        stroke="var(--text-primary)"
+        strokeWidth="0.75"
+        strokeDasharray="2 3"
+        strokeOpacity="0.25"
       />
 
-      {/* 3D Isometric Tensor Facets */}
-      {/* Top Facet (Memory / Input Plane) */}
-      <path 
-        d="M22 4L37.5 13L22 22L6.5 13L22 4Z" 
-        fill="url(#logoFacetTop)" 
-        fillOpacity="0.35" 
-        stroke="rgba(56, 189, 248, 0.6)" 
-        strokeWidth="1" 
+      {/* Terminal Prompt Chevron (Upper Left Apex of A) */}
+      <path
+        d="M12 15L22 23L12 31"
+        stroke="url(#terminalLogoGrad)"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        filter="url(#logoGlowFilter)"
       />
 
-      {/* Left Facet (Weights / Compute Plane) */}
-      <path 
-        d="M6.5 13L22 22V39.5L6.5 30.5V13Z" 
-        fill="url(#logoFacetLeft)" 
-        fillOpacity="0.5" 
-        stroke="rgba(99, 102, 241, 0.5)" 
-        strokeWidth="1" 
+      {/* Circuit Spine (Right Slanted Leg of A) */}
+      <path
+        d="M24 10L36 34"
+        stroke="url(#terminalLogoGrad)"
+        strokeWidth="3.2"
+        strokeLinecap="round"
+        filter="url(#logoGlowFilter)"
       />
 
-      {/* Right Facet (Attention / KV Cache Plane) */}
-      <path 
-        d="M22 22L37.5 13V30.5L22 39.5V22Z" 
-        fill="url(#logoFacetRight)" 
-        fillOpacity="0.65" 
-        stroke="rgba(168, 85, 247, 0.5)" 
-        strokeWidth="1" 
+      {/* Inner PCB Circuit Traces */}
+      <path d="M22 23L27 23L30 29" stroke="var(--text-primary)" strokeWidth="1.2" strokeOpacity="0.75" />
+      <path d="M24 14L28 20L28 26" stroke="var(--text-primary)" strokeWidth="1.2" strokeOpacity="0.6" />
+
+      {/* Blinking Terminal Execution Block Cursor (Crossbar of A) */}
+      <rect
+        x="17"
+        y="27"
+        width="11"
+        height="4"
+        rx="1"
+        fill="var(--text-primary)"
+        filter="url(#logoGlowFilter)"
       />
 
-      {/* Architectural Lattice Guides (Isometric grid lines) */}
-      <line x1="22" y1="4" x2="22" y2="22" stroke="rgba(255, 255, 255, 0.2)" strokeWidth="1" strokeDasharray="2 2" />
-      <line x1="6.5" y1="13" x2="22" y2="22" stroke="rgba(255, 255, 255, 0.2)" strokeWidth="1" />
-      <line x1="37.5" y1="13" x2="22" y2="22" stroke="rgba(255, 255, 255, 0.2)" strokeWidth="1" />
-
-      {/* Stylized Futuristic Monogram 'A' Carved Across the Isometric Core */}
-      {/* Left Leg */}
-      <path 
-        d="M22 9L12 29.5H16L22 17L28 29.5H32L22 9Z" 
-        fill="url(#logoCoreBeam)" 
-        filter="url(#tensorGlow)"
-      />
-
-      {/* Horizontal Synapse Crossbar */}
-      <path 
-        d="M15 24.5H29" 
-        stroke="#ffffff" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-      />
-
-      {/* Glowing Quantum Node Vertices */}
-      <circle cx="22" cy="9" r="2.2" fill="#ffffff" />
-      <circle cx="22" cy="17" r="1.8" fill="#38bdf8" />
-      <circle cx="22" cy="24.5" r="2.4" fill="url(#logoGlowCenter)" />
-      
-      <circle cx="12" cy="29.5" r="1.8" fill="#38bdf8" />
-      <circle cx="32" cy="29.5" r="1.8" fill="#c084fc" />
-
-      {/* Subtle corner photon pulses */}
-      <circle cx="22" cy="4" r="1.2" fill="#38bdf8" />
-      <circle cx="6.5" cy="30.5" r="1.2" fill="#818cf8" />
-      <circle cx="37.5" cy="30.5" r="1.2" fill="#a855f7" />
+      {/* Silicon Via Circuit Nodes */}
+      <circle cx="24" cy="10" r="2.2" fill="var(--text-primary)" />
+      <circle cx="36" cy="34" r="2" fill="var(--text-primary)" />
+      <circle cx="12" cy="15" r="1.5" fill="var(--text-primary)" />
+      <circle cx="12" cy="31" r="1.5" fill="var(--text-primary)" />
+      <circle cx="30" cy="29" r="1.2" fill="#22c55e" />
+      <circle cx="28" cy="26" r="1.2" fill="#22c55e" />
     </svg>
   );
 };

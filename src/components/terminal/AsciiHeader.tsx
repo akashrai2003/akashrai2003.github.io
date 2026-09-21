@@ -8,7 +8,7 @@ export const AsciiHeader: React.FC = () => {
 ██   ██  ██   ██  ██   ██  ███████  ██   ██`;
 
   return (
-    <div style={{ marginBottom: '1.5rem', overflowX: 'auto' }}>
+    <div style={{ overflowX: 'auto' }}>
       <pre
         style={{
           fontFamily: 'var(--font-mono)',
