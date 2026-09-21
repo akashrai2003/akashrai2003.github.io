@@ -1,42 +1,84 @@
 :root {
-  /* Fonts */
-  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  /* Monospace-first font stack for authentic engineering aesthetic */
+  --font-sans: 'JetBrains Mono', 'Fira Code', -apple-system, BlinkMacSystemFont, 'SF Mono', Menlo, Consolas, monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Menlo, Consolas, monospace;
 
   /* Transitions */
-  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-smooth: 400ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 300ms cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* Radius */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  /* Radius (Crisper, techy edges) */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
   --radius-full: 9999px;
 }
 
-/* Dark Theme (Default) */
-:root, [data-theme="dark"] {
+/* 1. Terminal CRT Phosphor Green Theme (Default - Modal GPU Glossary & Aleksa Gordic inspired) */
+:root, [data-theme="terminal"], [data-theme="dark"] {
+  --bg-canvas: #060c07;
+  --bg-card: rgba(10, 20, 11, 0.88);
+  --bg-card-hover: rgba(14, 28, 15, 0.95);
+  --bg-card-solid: #091309;
+  --bg-subtle: rgba(82, 224, 52, 0.05);
+  --bg-glass: rgba(8, 17, 9, 0.75);
+
+  --text-primary: #4ade80;
+  --text-secondary: #86efac;
+  --text-tertiary: #4ade80aa;
+  --text-muted: #2f6b3b;
+
+  --border-subtle: rgba(74, 222, 128, 0.16);
+  --border-card: rgba(74, 222, 128, 0.24);
+  --border-highlight: #4ade80;
+
+  --accent-cyan: #4ade80;
+  --accent-cyan-subtle: rgba(74, 222, 128, 0.12);
+  --accent-cyan-glow: rgba(74, 222, 128, 0.35);
+
+  --accent-indigo: #a7f3d0;
+  --accent-indigo-subtle: rgba(167, 243, 208, 0.12);
+
+  --accent-emerald: #22c55e;
+  --accent-emerald-subtle: rgba(34, 197, 94, 0.15);
+
+  --accent-amber: #facc15;
+  --accent-amber-subtle: rgba(250, 204, 21, 0.15);
+
+  --accent-purple: #86efac;
+  --accent-purple-subtle: rgba(134, 239, 172, 0.12);
+
+  --shadow-card: 0 4px 20px -4px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(74, 222, 128, 0.15);
+  --shadow-glow: 0 0 25px -4px rgba(74, 222, 128, 0.3);
+  --shadow-lg: 0 20px 40px -15px rgba(0, 0, 0, 0.8);
+
+  --nav-bg: rgba(6, 12, 7, 0.92);
+  --code-bg: #040805;
+}
+
+/* 2. Cyber Cyan Theme (Deep Space / Systems Engineering) */
+[data-theme="cyan"] {
   --bg-canvas: #06090f;
-  --bg-card: rgba(13, 19, 34, 0.75);
-  --bg-card-hover: rgba(20, 29, 51, 0.85);
+  --bg-card: rgba(13, 19, 34, 0.85);
+  --bg-card-hover: rgba(20, 29, 51, 0.95);
   --bg-card-solid: #0d1322;
-  --bg-subtle: rgba(255, 255, 255, 0.03);
-  --bg-glass: rgba(13, 19, 34, 0.6);
+  --bg-subtle: rgba(56, 189, 248, 0.04);
+  --bg-glass: rgba(13, 19, 34, 0.75);
 
   --text-primary: #f1f5f9;
   --text-secondary: #94a3b8;
   --text-tertiary: #64748b;
   --text-muted: #475569;
 
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-card: rgba(255, 255, 255, 0.12);
-  --border-highlight: rgba(56, 189, 248, 0.3);
+  --border-subtle: rgba(56, 189, 248, 0.15);
+  --border-card: rgba(56, 189, 248, 0.22);
+  --border-highlight: #38bdf8;
 
   --accent-cyan: #38bdf8;
   --accent-cyan-subtle: rgba(56, 189, 248, 0.12);
-  --accent-cyan-glow: rgba(56, 189, 248, 0.25);
+  --accent-cyan-glow: rgba(56, 189, 248, 0.3);
 
   --accent-indigo: #818cf8;
   --accent-indigo-subtle: rgba(129, 140, 248, 0.12);
@@ -50,35 +92,35 @@
   --accent-purple: #c084fc;
   --accent-purple-subtle: rgba(192, 132, 252, 0.12);
 
-  --shadow-card: 0 8px 32px -8px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(255, 255, 255, 0.05);
-  --shadow-glow: 0 0 25px -5px var(--accent-cyan-glow);
+  --shadow-card: 0 8px 32px -8px rgba(0, 0, 0, 0.6), 0 0 1px 1px rgba(56, 189, 248, 0.15);
+  --shadow-glow: 0 0 25px -5px rgba(56, 189, 248, 0.3);
   --shadow-lg: 0 20px 40px -15px rgba(0, 0, 0, 0.7);
 
-  --nav-bg: rgba(6, 9, 15, 0.85);
+  --nav-bg: rgba(6, 9, 15, 0.92);
   --code-bg: #090e18;
 }
 
-/* Light Theme */
+/* 3. Light Monospace Theme (Clean Developer Paper) */
 [data-theme="light"] {
   --bg-canvas: #f8fafc;
-  --bg-card: rgba(255, 255, 255, 0.85);
-  --bg-card-hover: rgba(255, 255, 255, 0.95);
+  --bg-card: rgba(255, 255, 255, 0.92);
+  --bg-card-hover: #ffffff;
   --bg-card-solid: #ffffff;
-  --bg-subtle: rgba(0, 0, 0, 0.02);
-  --bg-glass: rgba(255, 255, 255, 0.7);
+  --bg-subtle: rgba(0, 0, 0, 0.03);
+  --bg-glass: rgba(255, 255, 255, 0.85);
 
   --text-primary: #0f172a;
-  --text-secondary: #475569;
+  --text-secondary: #334155;
   --text-tertiary: #64748b;
   --text-muted: #94a3b8;
 
-  --border-subtle: rgba(0, 0, 0, 0.08);
-  --border-card: rgba(0, 0, 0, 0.1);
-  --border-highlight: rgba(2, 132, 199, 0.35);
+  --border-subtle: rgba(0, 0, 0, 0.1);
+  --border-card: rgba(0, 0, 0, 0.14);
+  --border-highlight: #2563eb;
 
-  --accent-cyan: #0284c7;
-  --accent-cyan-subtle: rgba(2, 132, 199, 0.1);
-  --accent-cyan-glow: rgba(2, 132, 199, 0.18);
+  --accent-cyan: #2563eb;
+  --accent-cyan-subtle: rgba(37, 99, 235, 0.08);
+  --accent-cyan-glow: rgba(37, 99, 235, 0.2);
 
   --accent-indigo: #4f46e5;
   --accent-indigo-subtle: rgba(79, 70, 229, 0.08);
@@ -89,13 +131,13 @@
   --accent-amber: #d97706;
   --accent-amber-subtle: rgba(217, 119, 6, 0.1);
 
-  --accent-purple: #9333ea;
-  --accent-purple-subtle: rgba(147, 51, 234, 0.08);
+  --accent-purple: #7c3aed;
+  --accent-purple-subtle: rgba(124, 58, 237, 0.08);
 
-  --shadow-card: 0 4px 20px -4px rgba(0, 0, 0, 0.08), 0 0 1px 1px rgba(0, 0, 0, 0.05);
-  --shadow-glow: 0 0 20px -4px var(--accent-cyan-glow);
+  --shadow-card: 0 4px 20px -4px rgba(0, 0, 0, 0.08), 0 0 1px 1px rgba(0, 0, 0, 0.06);
+  --shadow-glow: 0 0 20px -4px rgba(37, 99, 235, 0.2);
   --shadow-lg: 0 20px 35px -10px rgba(0, 0, 0, 0.1);
 
-  --nav-bg: rgba(248, 250, 252, 0.85);
+  --nav-bg: rgba(248, 250, 252, 0.92);
   --code-bg: #f1f5f9;
 }

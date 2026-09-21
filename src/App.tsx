@@ -1,49 +1,84 @@
 import React, { useState, useEffect } from 'react';
-import { Navbar } from './components/layout/Navbar';
-import { Footer } from './components/layout/Footer';
-import { Hero } from './components/home/Hero';
-import { CaseStudyView } from './components/case-study/CaseStudyView';
+import { TerminalHome } from './components/home/TerminalHome';
 import { BlogView } from './components/blog/BlogView';
 import { BlogPostPage } from './components/blog/BlogPostPage';
-import { ProjectsView } from './components/projects/ProjectsView';
-import { SkillsView } from './components/skills/SkillsView';
-import { ExperienceTimeline } from './components/experience/ExperienceTimeline';
-import { ConsultingSection } from './components/consulting/ConsultingSection';
-import { ContactSection } from './components/contact/ContactSection';
+import { ProjectsPage } from './components/pages/ProjectsPage';
+import { CaseStudiesPage } from './components/pages/CaseStudiesPage';
+import { ExperiencePage } from './components/pages/ExperiencePage';
+import { StackPage } from './components/pages/StackPage';
+import { ContactPage } from './components/pages/ContactPage';
 import { ResumeModal } from './components/resume/ResumeModal';
 import { BlogPost, blogPosts } from './data/blogPosts';
 
+type ThemeMode = 'terminal' | 'cyan' | 'light';
+type ViewRoute = 'home' | 'writing' | 'projects' | 'case-studies' | 'experience' | 'stack' | 'contact';
+
 export const App: React.FC = () => {
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const [activeSection, setActiveSection] = useState<string>('overview');
+  const [theme, setTheme] = useState<ThemeMode>('terminal');
+  const [currentRoute, setCurrentRoute] = useState<ViewRoute>('home');
   const [activePost, setActivePost] = useState<BlogPost | null>(null);
   const [resumeModalOpen, setResumeModalOpen] = useState<boolean>(false);
 
+  // Initialize theme and handle hash routing
   useEffect(() => {
-    const savedTheme = localStorage.getItem('akash_portfolio_theme') as 'dark' | 'light' | null;
-    if (savedTheme) {
+    const savedTheme = localStorage.getItem('akash_portfolio_theme') as ThemeMode | null;
+    if (savedTheme && ['terminal', 'cyan', 'light'].includes(savedTheme)) {
       setTheme(savedTheme);
       document.documentElement.setAttribute('data-theme', savedTheme);
     } else {
-      document.documentElement.setAttribute('data-theme', 'dark');
+      setTheme('terminal');
+      document.documentElement.setAttribute('data-theme', 'terminal');
     }
 
-    // Check if URL hash points to a specific blog slug
-    const hash = window.location.hash.replace('#', '');
-    if (hash.startsWith('post/')) {
-      const slug = hash.replace('post/', '');
-      const found = blogPosts.find((p) => p.slug === slug);
-      if (found) {
-        setActivePost(found);
+    const handleHash = () => {
+      const hash = window.location.hash.replace('#', '').replace(/^\//, '');
+      if (hash.startsWith('post/')) {
+        const slug = hash.replace('post/', '');
+        const found = blogPosts.find((p) => p.slug === slug);
+        if (found) {
+          setActivePost(found);
+          return;
+        }
       }
-    }
+
+      setActivePost(null);
+      if (['writing', 'projects', 'case-studies', 'experience', 'stack', 'contact'].includes(hash)) {
+        setCurrentRoute(hash as ViewRoute);
+      } else {
+        setCurrentRoute('home');
+      }
+    };
+
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
   }, []);
 
+  const handleSetTheme = (newTheme: ThemeMode) => {
+    setTheme(newTheme);
+    localStorage.setItem('akash_portfolio_theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+  };
+
   const toggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(nextTheme);
-    localStorage.setItem('akash_portfolio_theme', nextTheme);
-    document.documentElement.setAttribute('data-theme', nextTheme);
+    const cycle: Record<ThemeMode, ThemeMode> = {
+      terminal: 'cyan',
+      cyan: 'light',
+      light: 'terminal'
+    };
+    handleSetTheme(cycle[theme]);
+  };
+
+  const handleNavigate = (route: string) => {
+    setActivePost(null);
+    if (route === 'home' || route === '~' || route === '/') {
+      setCurrentRoute('home');
+      window.location.hash = '';
+    } else {
+      setCurrentRoute(route as ViewRoute);
+      window.location.hash = route;
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
   const handleSelectPost = (post: BlogPost) => {
@@ -54,83 +89,122 @@ export const App: React.FC = () => {
 
   const handleBackToWriting = () => {
     setActivePost(null);
+    setCurrentRoute('writing');
     window.location.hash = 'writing';
-    setTimeout(() => {
-      const element = document.getElementById('writing');
-      if (element) {
-        element.scrollIntoView({ behavior: 'instant' });
-      }
-    }, 50);
-  };
-
-  const handleNavigate = (sectionId: string) => {
-    if (activePost) {
-      setActivePost(null);
-    }
-    setActiveSection(sectionId);
-    setTimeout(() => {
-      const element = document.getElementById(sectionId);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 50);
+    window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
   // Dedicated Full-Page Article View (Aleksa Gordic style)
   if (activePost) {
     return (
-      <BlogPostPage
-        post={activePost}
-        onBack={handleBackToWriting}
-        theme={theme}
-        toggleTheme={toggleTheme}
-      />
+      <div className="app-root">
+        <BlogPostPage
+          post={activePost}
+          onBack={handleBackToWriting}
+          theme={theme === 'light' ? 'light' : 'dark'}
+          toggleTheme={toggleTheme}
+        />
+        <ResumeModal
+          isOpen={resumeModalOpen}
+          onClose={() => setResumeModalOpen(false)}
+        />
+      </div>
     );
   }
 
   return (
     <div className="app-root">
-      {/* Navigation */}
-      <Navbar
-        activeSection={activeSection}
-        setActiveSection={setActiveSection}
-        theme={theme}
-        toggleTheme={toggleTheme}
-        onOpenResume={() => setResumeModalOpen(true)}
-      />
+      {/* Subpage Header for non-home routes */}
+      {currentRoute !== 'home' && (
+        <header
+          style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 100,
+            background: 'var(--nav-bg)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            borderBottom: '1px solid var(--border-subtle)',
+            padding: '0.75rem 1.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '0.85rem'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span
+              onClick={() => handleNavigate('home')}
+              style={{ color: 'var(--text-primary)', cursor: 'pointer', fontWeight: 700 }}
+            >
+              akash@systems:~
+            </span>
+            <span style={{ color: 'var(--text-tertiary)' }}>/</span>
+            <span style={{ color: 'var(--accent-cyan)' }}>{currentRoute}</span>
+          </div>
 
-      {/* Main Content */}
-      <main id="overview">
-        {/* 1. Hero & Verified Proof Metrics */}
-        <Hero
-          onNavigate={handleNavigate}
-          onOpenResume={() => setResumeModalOpen(true)}
-        />
+          <button
+            onClick={toggleTheme}
+            className="theme-switch-btn"
+            title="Toggle theme"
+          >
+            <span>theme:</span>
+            <strong style={{ color: 'var(--text-primary)' }}>{theme} /&gt;</strong>
+          </button>
+        </header>
+      )}
 
-        {/* 2. Experience & Open Source Proof */}
-        <ExperienceTimeline />
+      {/* Main View Router */}
+      <main>
+        {currentRoute === 'home' && (
+          <TerminalHome
+            onNavigate={handleNavigate}
+            theme={theme}
+            onToggleTheme={toggleTheme}
+            onSetTheme={handleSetTheme}
+            onOpenResume={() => setResumeModalOpen(true)}
+          />
+        )}
 
-        {/* 3. Deep Technical Case Studies */}
-        <CaseStudyView />
+        {currentRoute === 'writing' && (
+          <BlogView
+            onSelectPost={handleSelectPost}
+            onBackHome={() => handleNavigate('home')}
+          />
+        )}
 
-        {/* 4. Technical Writing / Engineering Blog */}
-        <BlogView onSelectPost={handleSelectPost} />
+        {currentRoute === 'projects' && (
+          <ProjectsPage
+            onBackHome={() => handleNavigate('home')}
+          />
+        )}
 
-        {/* 5. Selected Projects */}
-        <ProjectsView />
+        {currentRoute === 'case-studies' && (
+          <CaseStudiesPage
+            onBackHome={() => handleNavigate('home')}
+          />
+        )}
 
-        {/* 6. Technical Skills */}
-        <SkillsView />
+        {currentRoute === 'experience' && (
+          <ExperiencePage
+            onBackHome={() => handleNavigate('home')}
+          />
+        )}
 
-        {/* 7. Capabilities / Advisory */}
-        <ConsultingSection />
+        {currentRoute === 'stack' && (
+          <StackPage
+            onBackHome={() => handleNavigate('home')}
+          />
+        )}
 
-        {/* 8. Direct Contact */}
-        <ContactSection />
+        {currentRoute === 'contact' && (
+          <ContactPage
+            onBackHome={() => handleNavigate('home')}
+            onOpenResume={() => setResumeModalOpen(true)}
+          />
+        )}
       </main>
-
-      {/* Footer */}
-      <Footer />
 
       {/* Resume Modal */}
       <ResumeModal

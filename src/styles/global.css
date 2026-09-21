@@ -409,3 +409,139 @@ code, pre {
   font-family: var(--font-mono);
   font-size: 0.85rem;
 }
+
+/* ==========================================================================
+   Terminal & Monospace Engineering Styles (Aleksa Gordic & Modal Inspired)
+   ========================================================================== */
+
+.terminal-shell-card {
+  background: var(--bg-card-solid);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  font-family: var(--font-mono);
+  position: relative;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.terminal-shell-card:hover {
+  border-color: var(--border-highlight);
+  box-shadow: var(--shadow-glow);
+}
+
+.terminal-shell-titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1rem;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-card);
+  font-size: 0.82rem;
+  color: var(--text-tertiary);
+  user-select: none;
+}
+
+.terminal-dots {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.terminal-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.terminal-dot.red { background: #ef4444; }
+.terminal-dot.yellow { background: #eab308; }
+.terminal-dot.green { background: #22c55e; }
+
+.terminal-prompt-prefix {
+  color: var(--text-primary);
+  font-weight: 700;
+  user-select: none;
+}
+
+.terminal-command-text {
+  color: var(--text-secondary);
+}
+
+.terminal-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1.15em;
+  vertical-align: text-bottom;
+  background-color: var(--text-primary);
+  animation: terminalBlink 1s step-start infinite;
+  margin-left: 2px;
+}
+
+@keyframes terminalBlink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Tech Acronym Badges (Modal GPU Glossary style) */
+.badge-tech {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  border-radius: 4px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
+  letter-spacing: 0.03em;
+  transition: all var(--transition-fast);
+}
+
+.badge-tech:hover {
+  border-color: var(--accent-cyan);
+  background: var(--accent-cyan-subtle);
+}
+
+/* Monospaced Folder Link (Aleksa Gordic ls style) */
+.folder-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.folder-link:hover {
+  color: var(--accent-cyan);
+  transform: translateX(4px);
+}
+
+/* Top Theme Switcher Button */
+.theme-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: transparent;
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.theme-switch-btn:hover {
+  border-color: var(--accent-cyan);
+  background: var(--accent-cyan-subtle);
+  box-shadow: 0 0 10px var(--accent-cyan-glow);
+}
+
