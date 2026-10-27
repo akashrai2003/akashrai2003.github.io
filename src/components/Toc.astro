@@ -1,0 +1,107 @@
+---
+import type { MarkdownHeading } from 'astro';
+
+interface Props {
+  headings: MarkdownHeading[];
+  variant: 'rail' | 'inline';
+}
+
+const { headings, variant } = Astro.props;
+const items = headings
+  .filter((h) => h.depth === 2 || h.depth === 3)
+  .map((h) => ({ ...h, text: h.text.replace(/[:.]\s*$/, '') }));
+---
+
+{
+  items.length > 1 &&
+    (variant === 'rail' ? (
+      <nav class="toc toc-rail" aria-label="Table of contents">
+        <p class="toc-title">On this page</p>
+        <ol>
+          {items.map((h) => (
+            <li class={`d${h.depth}`}>
+              <a href={`#${h.slug}`} data-toc-link={h.slug}>{h.text}</a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    ) : (
+      <details class="toc toc-inline">
+        <summary>Contents</summary>
+        <ol>
+          {items.map((h) => (
+            <li class={`d${h.depth}`}>
+              <a href={`#${h.slug}`}>{h.text}</a>
+            </li>
+          ))}
+        </ol>
+      </details>
+    ))
+}
+
+<style>
+  .toc ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .toc a {
+    display: block;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    padding: 0.3rem 0 0.3rem 0.85rem;
+    border-left: 1px solid var(--border);
+  }
+
+  .toc a:hover {
+    color: var(--text);
+  }
+
+  .toc .d3 a {
+    padding-left: 1.7rem;
+  }
+
+  .toc a.active {
+    color: var(--accent);
+    border-left-color: var(--accent);
+  }
+
+  .toc-title {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 0 0.75rem;
+  }
+
+  .toc-rail {
+    max-height: calc(100vh - 7rem);
+    overflow-y: auto;
+  }
+
+  .toc-inline {
+    margin-bottom: 2rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    background: var(--bg-soft);
+  }
+
+  .toc-inline summary {
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .toc-inline ol {
+    margin-top: 0.75rem;
+  }
+
+  .toc-inline a {
+    font-size: 0.9rem;
+  }
+</style>

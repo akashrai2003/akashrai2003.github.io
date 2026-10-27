@@ -1,0 +1,56 @@
+---
+import Icon from './Icon.astro';
+import { siteConfig } from '../data/siteConfig';
+---
+
+<section class="subscribe" aria-labelledby="subscribe-title">
+  <h2 id="subscribe-title">Get new posts</h2>
+  <p>
+    I write about LLM inference, retrieval and the systems around them, mostly things I learned the hard way in production.
+    New posts go out every few weeks.
+  </p>
+  <div class="actions">
+    {
+      siteConfig.newsletterUrl && (
+        <a class="btn btn-primary" href={siteConfig.newsletterUrl}>
+          <Icon name="mail" />
+          Subscribe by email
+        </a>
+      )
+    }
+    <a class="btn" href={siteConfig.linkedin}>
+      <Icon name="linkedin" />
+      Follow on LinkedIn
+    </a>
+    <a class="btn" href="/rss.xml">
+      <Icon name="rss" />
+      RSS feed
+    </a>
+  </div>
+</section>
+
+<style>
+  .subscribe {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    background: var(--bg-soft);
+  }
+
+  h2 {
+    margin: 0 0 0.4rem;
+    font-size: 1.15rem;
+  }
+
+  p {
+    margin: 0 0 1.1rem;
+    color: var(--text-2);
+    font-size: 0.95rem;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+</style>

@@ -1,0 +1,37 @@
+---
+import Base from '../../../layouts/Base.astro';
+import PostList from '../../../components/PostList.astro';
+import { getPosts, tagSlug, type Post } from '../../../lib/posts';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  const byTag = new Map<string, { name: string; posts: Post[] }>();
+  for (const p of posts) {
+    for (const t of p.data.tags) {
+      const slug = tagSlug(t);
+      if (!byTag.has(slug)) byTag.set(slug, { name: t, posts: [] });
+      byTag.get(slug)!.posts.push(p);
+    }
+  }
+  return [...byTag.entries()].map(([tag, v]) => ({ params: { tag }, props: v }));
+}
+
+const { name, posts } = Astro.props;
+---
+
+<Base title={`Posts tagged “${name}”`} description={`Writing about ${name}.`}>
+  <div class="container">
+    <header class="page-header">
+      <p class="kicker"><a href="/blog/">~/writing</a> / tags</p>
+      <h1>#{name}</h1>
+      <p>{posts.length} {posts.length === 1 ? 'post' : 'posts'}</p>
+    </header>
+    <PostList posts={posts} />
+  </div>
+</Base>
+
+<style>
+  .kicker a {
+    color: inherit;
+  }
+</style>

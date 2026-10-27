@@ -1,0 +1,62 @@
+---
+import Icon from './Icon.astro';
+import { siteConfig } from '../data/siteConfig';
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container-wide inner">
+    <p>© {year} {siteConfig.name} · Bengaluru</p>
+    <ul aria-label="Elsewhere">
+      <li><a href={siteConfig.github} aria-label="GitHub"><Icon name="github" /></a></li>
+      <li><a href={siteConfig.linkedin} aria-label="LinkedIn"><Icon name="linkedin" /></a></li>
+      <li><a href={`mailto:${siteConfig.email}`} aria-label="Email"><Icon name="mail" /></a></li>
+      <li><a href="/rss.xml" aria-label="RSS feed"><Icon name="rss" /></a></li>
+    </ul>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--border);
+    margin-top: 5rem;
+  }
+
+  .inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 1.75rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  ul {
+    display: flex;
+    gap: 0.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  a {
+    display: inline-grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 1.05rem;
+  }
+
+  a:hover {
+    color: var(--accent);
+    background: var(--bg-soft);
+  }
+</style>

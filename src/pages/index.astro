@@ -1,0 +1,506 @@
+---
+import Base from '../layouts/Base.astro';
+import Logo from '../components/Logo.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
+import { getPosts, formatDate, postUrl } from '../lib/posts';
+import { siteConfig } from '../data/siteConfig';
+import { projects } from '../data/projects';
+import { caseStudies } from '../data/caseStudies';
+
+const posts = await getPosts();
+const latest = posts.slice(0, 4);
+
+const ascii = ` █████  ██   ██  █████  ███████ ██   ██
+██   ██ ██  ██  ██   ██ ██      ██   ██
+███████ █████   ███████ ███████ ███████
+██   ██ ██  ██  ██   ██      ██ ██   ██
+██   ██ ██   ██ ██   ██ ███████ ██   ██`;
+
+// Data for the interactive prompt (kept small; rendered into a JSON script tag).
+const termData = {
+  pages: {
+    writing: '/blog/',
+    blog: '/blog/',
+    projects: '/projects/',
+    experience: '/experience/',
+    resume: siteConfig.resumeUrl
+  },
+  posts: posts.map((p) => ({ title: p.data.title, url: postUrl(p), date: formatDate(p.data.pubDate, 'short') })),
+  email: siteConfig.email,
+  github: siteConfig.github,
+  linkedin: siteConfig.linkedin
+};
+---
+
+<Base bare>
+  <div class="home">
+    <div class="topbar">
+      <a class="rss" href="/rss.xml">rss</a>
+      <ThemeToggle />
+    </div>
+
+    <section class="terminal" aria-label="About Akash Rai">
+      <div class="term-bar" aria-hidden="true">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span class="term-title">akash@bengaluru — zsh — 80×24</span>
+      </div>
+
+      <div class="term-body">
+        <div class="banner">
+          <Logo size={56} />
+          <pre class="ascii" role="img" aria-label="AKASH">{ascii}</pre>
+        </div>
+        <h1 class="sr-only">{siteConfig.name}, {siteConfig.role}</h1>
+
+        <div class="block">
+          <p class="cmd"><span class="ps">$</span> echo $PHILOSOPHY</p>
+          <p class="out quote">"building practical AI systems • passionate about inference &amp; diving deeper into the bare metal"</p>
+        </div>
+
+        <div class="block">
+          <p class="cmd"><span class="ps">#</span> cat /proc/status</p>
+          <div class="out">
+            <p>
+              <span class="k">→ Currently:</span> AI Engineer at Inferigence Quotient, building on-prem &amp; air-gapped
+              GenAI platforms (document intelligence, agents, vLLM serving on Blackwell GPUs)
+            </p>
+            <p><span class="k">→ Previously:</span></p>
+            <ul class="tree">
+              <li><span class="br">├──</span> Independent consulting: SAQL analytics assistant &amp; graph-RAG for enterprise</li>
+              <li><span class="br">├──</span> AI Planet: LangGraph multi-agent assessment generator</li>
+              <li><span class="br">└──</span> DeepLogicAI: medical RAG pipeline, ~10× cheaper than managed RAG</li>
+            </ul>
+            <p>
+              <span class="k">→ Open source:</span>{' '}
+              <a href="https://github.com/keplergl/kepler.gl/pull/3262">kepler.gl #3262</a> (merged)
+            </p>
+            <p><span class="k">→ Learning:</span> C++ and CUDA, to understand inference runtimes from first principles</p>
+            <p><span class="k">→ Based in</span> Bengaluru, India <span class="dim">(open to remote)</span></p>
+          </div>
+        </div>
+
+        <div class="block">
+          <p class="cmd"><span class="ps">#</span> ls ~/pages/</p>
+          <ul class="out ls">
+            <li>
+              <a href="/blog/">writing/</a>
+              <span class="dim">— {posts.length} posts on inference, retrieval &amp; agents</span>
+            </li>
+            <li>
+              <a href="/projects/">projects/</a>
+              <span class="dim">— {projects.length} projects + {caseStudies.length} case studies</span>
+            </li>
+            <li><a href="/experience/">experience/</a> <span class="dim">— where I've worked &amp; what I shipped</span></li>
+            <li><a href={siteConfig.resumeUrl}>resume.pdf</a></li>
+          </ul>
+        </div>
+
+        <div class="block">
+          <p class="cmd"><span class="ps">#</span> ls -t ~/writing | head -{latest.length}</p>
+          <ul class="out posts">
+            {
+              latest.map((p) => (
+                <li>
+                  <time datetime={p.data.pubDate.toISOString()}>{formatDate(p.data.pubDate, 'short')}</time>
+                  <a href={postUrl(p)}>{p.data.title}</a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <div class="block">
+          <p class="cmd"><span class="ps">#</span> cat ~/.contact</p>
+          <ul class="out social">
+            <li><a href={siteConfig.github}>github</a></li>
+            <li><a href={siteConfig.linkedin}>linkedin</a></li>
+            <li><a href={`mailto:${siteConfig.email}`}>email</a></li>
+            <li><a href="/rss.xml">rss</a></li>
+          </ul>
+        </div>
+
+        <div class="history" data-history aria-live="polite"></div>
+        <form class="prompt" data-prompt autocomplete="off">
+          <label for="term-input" class="ps-full">akash@bengaluru:~$</label>
+          <input id="term-input" name="cmd" type="text" spellcheck="false" placeholder="type 'help'" />
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <script type="application/json" id="term-data" set:html={JSON.stringify(termData)} />
+</Base>
+
+<script>
+  // Redirect links from the old hash-routed site (#post/slug, #writing…) to real URLs.
+  const legacy = location.hash.replace(/^#\/?/, '');
+  if (legacy) {
+    const map: Record<string, string> = {
+      writing: '/blog/',
+      projects: '/projects/',
+      'case-studies': '/projects/',
+      experience: '/experience/',
+      stack: '/experience/',
+      contact: '/'
+    };
+    if (legacy.startsWith('post/')) location.replace(`/blog/${legacy.slice(5)}/`);
+    else if (map[legacy] && map[legacy] !== '/') location.replace(map[legacy]);
+  }
+
+  type TermData = {
+    pages: Record<string, string>;
+    posts: { title: string; url: string; date: string }[];
+    email: string;
+    github: string;
+    linkedin: string;
+  };
+
+  const data: TermData = JSON.parse(document.getElementById('term-data')!.textContent!);
+  const form = document.querySelector<HTMLFormElement>('[data-prompt]')!;
+  const input = form.querySelector('input')!;
+  const history = document.querySelector<HTMLElement>('[data-history]')!;
+  const past: string[] = [];
+  let cursor = 0;
+
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const link = (href: string, text: string) => `<a href="${esc(href)}">${esc(text)}</a>`;
+
+  const commands: Record<string, (args: string[]) => string> = {
+    help: () =>
+      [
+        'available commands:',
+        '  ls              list pages',
+        '  cd &lt;page&gt;       open a page (writing, projects, experience)',
+        '  posts           list all posts',
+        '  open &lt;n&gt;        open post number n',
+        '  resume          open resume.pdf',
+        '  contact         ways to reach me',
+        '  whoami · theme · clear'
+      ].join('\n'),
+    ls: () =>
+      ['writing/', 'projects/', 'experience/'].map((p) => link(data.pages[p.slice(0, -1)], p)).join('  ') +
+      '  ' +
+      link(data.pages.resume, 'resume.pdf'),
+    cd: ([p = '']) => {
+      const key = p.replace(/^~?\/?/, '').replace(/\/$/, '');
+      if (!key || key === '~') return '';
+      const url = data.pages[key];
+      if (!url) return `cd: no such directory: ${esc(p)}`;
+      location.href = url;
+      return `opening ${esc(key)}/ …`;
+    },
+    posts: () =>
+      data.posts.map((p, i) => `${String(i + 1).padStart(2)}  ${esc(p.date)}  ${link(p.url, p.title)}`).join('\n'),
+    open: ([n = '']) => {
+      const post = data.posts[Number(n) - 1];
+      if (!post) return data.pages[n] ? commands.cd([n]) : `open: try 'posts' then 'open 1'`;
+      location.href = post.url;
+      return `opening "${esc(post.title)}" …`;
+    },
+    resume: () => {
+      location.href = data.pages.resume;
+      return 'opening resume.pdf …';
+    },
+    contact: () =>
+      [
+        `email     ${link('mailto:' + data.email, data.email)}`,
+        `linkedin  ${link(data.linkedin, data.linkedin.replace(/^https?:\/\/(www\.)?/, ''))}`,
+        `github    ${link(data.github, data.github.replace(/^https?:\/\//, ''))}`
+      ].join('\n'),
+    whoami: () => 'akash — AI engineer. inference, retrieval, agents. currently learning CUDA.',
+    theme: () => {
+      document.querySelector<HTMLButtonElement>('[data-theme-toggle]')?.click();
+      return `theme: ${document.documentElement.getAttribute('data-theme')}`;
+    },
+    clear: () => {
+      history.innerHTML = '';
+      return '';
+    },
+    sudo: () => 'nice try.'
+  };
+  commands.blog = commands.writing = () => commands.cd(['writing']);
+  commands.cat = ([f = '']) => (f.includes('resume') ? commands.resume([]) : `cat: ${esc(f)}: try 'help'`);
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const raw = input.value.trim();
+    input.value = '';
+    if (!raw) return;
+    past.push(raw);
+    cursor = past.length;
+    const [name, ...args] = raw.split(/\s+/);
+    const fn = commands[name.toLowerCase()];
+    const out = fn ? fn(args) : `command not found: ${esc(name)} (try 'help')`;
+    if (name.toLowerCase() === 'clear') return;
+    const entry = document.createElement('div');
+    entry.innerHTML = `<p class="cmd"><span class="ps">$</span> ${esc(raw)}</p>${out ? `<pre class="out">${out}</pre>` : ''}`;
+    history.appendChild(entry);
+    form.scrollIntoView({ block: 'nearest' });
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp' && cursor > 0) input.value = past[--cursor];
+    else if (e.key === 'ArrowDown') input.value = past[++cursor] ?? ((cursor = past.length), '');
+    else return;
+    e.preventDefault();
+  });
+</script>
+
+<style>
+  .home {
+    max-width: 52rem;
+    margin: 0 auto;
+    padding: 1.25rem 1rem 0;
+  }
+
+  .topbar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .rss {
+    font: 0.8rem var(--font-mono);
+    color: var(--muted);
+  }
+
+  .terminal {
+    background: var(--term-bg);
+    border: 1px solid var(--term-border);
+    border-radius: 12px;
+    box-shadow: 0 20px 60px -20px rgb(0 0 0 / 0.45);
+    overflow: hidden;
+    color: var(--term-text);
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  .term-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.7rem 1rem;
+    background: var(--term-bar);
+    border-bottom: 1px solid var(--term-border);
+  }
+
+  .dot {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+  }
+
+  .r { background: #ff5f57; }
+  .y { background: #febc2e; }
+  .g { background: #28c840; }
+
+  .term-title {
+    margin-left: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--term-dim);
+  }
+
+  .term-body {
+    padding: 1.75rem 1.75rem 1.5rem;
+  }
+
+  .banner {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .ascii {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: clamp(0.4rem, 1.9vw, 0.9rem);
+    line-height: 1.1;
+    color: var(--term-green);
+    text-shadow: 0 0 14px rgb(74 222 128 / 0.35);
+    overflow: hidden;
+  }
+
+  .block {
+    padding-block: 1.1rem;
+    border-top: 1px solid var(--term-border);
+  }
+
+  .block:first-of-type {
+    border-top: 0;
+  }
+
+  .terminal p,
+  .terminal ul {
+    margin: 0;
+  }
+
+  .terminal ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .cmd {
+    color: var(--term-bright);
+    font-weight: 600;
+    margin-bottom: 0.4rem !important;
+  }
+
+  .ps {
+    color: var(--term-dim);
+    font-weight: 400;
+    margin-right: 0.35rem;
+  }
+
+  .out {
+    padding-left: 1rem;
+  }
+
+  .out p + p {
+    margin-top: 0.35rem;
+  }
+
+  .quote {
+    color: var(--term-green);
+    font-weight: 600;
+  }
+
+  .k {
+    color: var(--term-green);
+  }
+
+  .dim {
+    color: var(--term-dim);
+  }
+
+  .ls .dim {
+    margin-left: 0.6ch;
+  }
+
+  .tree {
+    padding-left: 1.25rem !important;
+  }
+
+  .br {
+    color: var(--term-dim);
+  }
+
+  .terminal a {
+    color: var(--term-green);
+    text-decoration: underline;
+    text-decoration-color: rgb(74 222 128 / 0.4);
+    text-underline-offset: 3px;
+  }
+
+  .terminal a:hover {
+    color: var(--term-bright);
+    text-decoration-color: currentColor;
+  }
+
+  .ls li,
+  .posts li {
+    padding-block: 0.15rem;
+  }
+
+  .ls a::before {
+    content: '📂 ';
+    display: inline-block;
+    margin-right: 0.15rem;
+  }
+
+  .ls li:last-child a::before {
+    content: '📄 ';
+  }
+
+  .posts li {
+    display: grid;
+    grid-template-columns: 7.5rem 1fr;
+    gap: 0.75rem;
+  }
+
+  .posts time {
+    color: var(--term-dim);
+  }
+
+  .social {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.5rem;
+  }
+
+  .social li::before {
+    content: '• ';
+    color: var(--term-dim);
+  }
+
+  .history :global(.cmd) {
+    margin-top: 0.75rem !important;
+  }
+
+  .history :global(pre.out) {
+    margin: 0;
+    font: inherit;
+    white-space: pre-wrap;
+    color: var(--term-text);
+  }
+
+  .prompt {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--term-border);
+  }
+
+  .ps-full {
+    color: var(--term-green);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .prompt input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    outline: 0;
+    color: var(--term-bright);
+    font: inherit;
+    caret-color: var(--term-green);
+  }
+
+  .prompt input::placeholder {
+    color: var(--term-dim);
+  }
+
+  @media (max-width: 560px) {
+    .terminal {
+      font-size: 0.82rem;
+    }
+    .term-body {
+      padding: 1.25rem 1rem;
+    }
+    .banner :global(.logo) {
+      width: 40px;
+      height: 40px;
+    }
+    .out {
+      padding-left: 0.25rem;
+    }
+    .tree {
+      padding-left: 0.5rem !important;
+    }
+    .posts li {
+      grid-template-columns: 1fr;
+      gap: 0;
+      padding-block: 0.35rem;
+    }
+    .term-title {
+      display: none;
+    }
+  }
+</style>

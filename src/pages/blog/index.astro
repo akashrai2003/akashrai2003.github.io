@@ -1,0 +1,52 @@
+---
+import Base from '../../layouts/Base.astro';
+import PostList from '../../components/PostList.astro';
+import Subscribe from '../../components/Subscribe.astro';
+import { getPosts, tagSlug } from '../../lib/posts';
+
+const posts = await getPosts();
+const tagCounts = new Map<string, number>();
+posts.forEach((p) => p.data.tags.forEach((t) => tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1)));
+const topTags = [...tagCounts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 14);
+---
+
+<Base title="Writing" description="Notes and deep-dives on LLM inference, retrieval, agents and the systems that run them.">
+  <div class="container">
+    <header class="page-header">
+      <p class="kicker">~/writing</p>
+      <h1>Writing</h1>
+      <p>
+        Notes and deep-dives on LLM inference, retrieval, agents and the systems that run them, mostly lessons from shipping
+        them.
+      </p>
+    </header>
+
+    <ul class="tag-list topics" aria-label="Topics">
+      {
+        topTags.map(([t]) => (
+          <li>
+            <a class="tag" href={`/blog/tags/${tagSlug(t)}/`}>
+              {t}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <PostList posts={posts} byYear />
+
+    <div class="subscribe-wrap">
+      <Subscribe />
+    </div>
+  </div>
+</Base>
+
+<style>
+  .topics {
+    margin-bottom: 2.5rem;
+  }
+
+  .subscribe-wrap {
+    margin-top: 4rem;
+  }
+</style>

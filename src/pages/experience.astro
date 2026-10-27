@@ -1,0 +1,194 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { experiences, openSourceContributions } from '../data/experience';
+import { skillCategories } from '../data/skills';
+import { siteConfig } from '../data/siteConfig';
+---
+
+<Base title="Experience" description="Where Akash Rai has worked and what he shipped: AI engineering, consulting, internships and open source.">
+  <div class="container">
+    <header class="page-header">
+      <p class="kicker">~/experience</p>
+      <h1>Experience</h1>
+      <p>
+        Two-plus years shipping GenAI systems to production, from retrieval pipelines to on-prem GPU inference.
+        <a href={siteConfig.resumeUrl}>Download résumé (PDF)</a>.
+      </p>
+    </header>
+
+    <ol class="timeline">
+      {
+        experiences.map((e) => (
+          <li class="job">
+            <div class="when">
+              <span>{e.period}</span>
+              <span>{e.location}</span>
+            </div>
+            <div class="what">
+              <h2>
+                {e.role} <span class="at">· {e.organization}</span>
+              </h2>
+              <p class="summary">{e.summary}</p>
+              <ul class="highlights">
+                {e.highlights.map((h) => (
+                  <li>{h}</li>
+                ))}
+              </ul>
+              <ul class="tag-list">
+                {e.technologies.map((t) => (
+                  <li class="tag">{t}</li>
+                ))}
+              </ul>
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+
+    <h2 class="section-title">Open source</h2>
+    <ul class="oss">
+      {
+        openSourceContributions.map((o) => (
+          <li>
+            <a href={o.link}>
+              <span class="oss-head">
+                <strong>{o.project}</strong>
+                <span class="kicker">
+                  {o.prNumber} · {o.status} · {o.date}
+                </span>
+              </span>
+              <span class="oss-desc">{o.description}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <h2 class="section-title">Toolbox</h2>
+    <div class="skills">
+      {
+        skillCategories.map((cat) => (
+          <section>
+            <h3>{cat.category}</h3>
+            <ul class="tag-list">
+              {cat.skills.map((s) => (
+                <li class="tag" title={s.context}>
+                  {s.name}
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      }
+    </div>
+
+    <p class="cta">
+      <a class="btn" href={siteConfig.resumeUrl}><Icon name="file" /> Résumé</a>
+      <a class="btn" href={`mailto:${siteConfig.email}`}><Icon name="mail" /> {siteConfig.email}</a>
+    </p>
+  </div>
+</Base>
+
+<style>
+  .timeline {
+    list-style: none;
+    margin: 1rem 0 0;
+    padding: 0;
+  }
+
+  .job {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+    padding: 1.75rem 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .when {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1rem;
+    font: 0.78rem var(--font-mono);
+    color: var(--muted);
+  }
+
+  .what h2 {
+    font-size: 1.15rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .at {
+    color: var(--text-2);
+    font-weight: 500;
+  }
+
+  .summary {
+    margin: 0;
+    color: var(--text-2);
+  }
+
+  .highlights {
+    margin: 0.9rem 0 1.1rem;
+    padding-left: 1.2rem;
+    font-size: 0.94rem;
+    color: var(--text-2);
+  }
+
+  .highlights li + li {
+    margin-top: 0.45rem;
+  }
+
+  .highlights li::marker {
+    color: var(--muted);
+  }
+
+  .oss {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .oss a {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border);
+    text-decoration: none;
+    color: var(--text-2);
+  }
+
+  .oss-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+    color: var(--text);
+  }
+
+  .oss a:hover strong {
+    color: var(--accent);
+  }
+
+  .oss-desc {
+    font-size: 0.92rem;
+  }
+
+  .skills {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .skills h3 {
+    font-size: 0.95rem;
+    margin: 0 0 0.6rem;
+  }
+
+  .cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 3rem;
+  }
+</style>

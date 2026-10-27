@@ -1,0 +1,451 @@
+---
+import 'katex/dist/katex.min.css';
+import '../../styles/prose.css';
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Toc from '../../components/Toc.astro';
+import Share from '../../components/Share.astro';
+import Subscribe from '../../components/Subscribe.astro';
+import Logo from '../../components/Logo.astro';
+import Icon from '../../components/Icon.astro';
+import { getPosts, formatDate, postUrl, tagSlug, type Post } from '../../lib/posts';
+import { siteConfig } from '../../data/siteConfig';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((post, i) => ({
+    params: { slug: post.id },
+    props: { post, newer: posts[i - 1], older: posts[i + 1], all: posts }
+  }));
+}
+
+interface Props {
+  post: Post;
+  newer?: Post;
+  older?: Post;
+  all: Post[];
+}
+
+const { post, newer, older, all } = Astro.props;
+const { data } = post;
+const { Content, headings, remarkPluginFrontmatter } = await render(post);
+const minutes = remarkPluginFrontmatter.minutesRead as number;
+const url = new URL(postUrl(post), Astro.site).toString();
+const ogImage = `/og/${post.id}.png`;
+const series = data.series
+  ? all.filter((p) => p.data.series === data.series).sort((a, b) => a.data.pubDate.valueOf() - b.data.pubDate.valueOf())
+  : [];
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: data.title,
+  description: data.description,
+  datePublished: data.pubDate.toISOString(),
+  dateModified: (data.updatedDate ?? data.pubDate).toISOString(),
+  author: { '@type': 'Person', name: siteConfig.name, url: Astro.site?.toString() },
+  image: new URL(ogImage, Astro.site).toString(),
+  mainEntityOfPage: url,
+  keywords: data.tags.join(', ')
+};
+---
+
+<Base
+  title={data.title}
+  description={data.description}
+  image={ogImage}
+  type="article"
+  publishedTime={data.pubDate}
+  modifiedTime={data.updatedDate}
+  tags={data.tags}
+  jsonLd={jsonLd}
+>
+  <div class="progress" aria-hidden="true"><span data-progress></span></div>
+
+  <div class="post-layout">
+    <article class="post" data-article>
+      <a class="back" href="/blog/"><Icon name="arrowLeft" /> All writing</a>
+
+      <header class="post-header">
+        <p class="kicker">
+          {data.category && <span>{data.category}</span>}
+          {data.category && <span aria-hidden="true"> · </span>}
+          <span>{minutes} min read</span>
+        </p>
+        <h1>{data.title}</h1>
+        <p class="dek">{data.description}</p>
+        <div class="byline">
+          <Logo size={36} />
+          <div>
+            <a href="/" class="author">{siteConfig.name}</a>
+            <span class="dates">
+              <time datetime={data.pubDate.toISOString()}>{formatDate(data.pubDate)}</time>
+              {
+                data.updatedDate && (
+                  <>
+                    {' · Updated '}
+                    <time datetime={data.updatedDate.toISOString()}>{formatDate(data.updatedDate)}</time>
+                  </>
+                )
+              }
+            </span>
+          </div>
+        </div>
+        {data.draft && <p class="draft-banner">Draft: only visible in local dev, not published.</p>}
+      </header>
+
+      {
+        series.length > 1 && (
+          <aside class="series">
+            <p class="series-title">
+              Series · <strong>{data.series}</strong>
+            </p>
+            <ol>
+              {series.map((p) => (
+                <li>
+                  {p.id === post.id ? (
+                    <span aria-current="page">{p.data.title}</span>
+                  ) : (
+                    <a href={postUrl(p)}>{p.data.title}</a>
+                  )}
+                </li>
+              ))}
+            </ol>
+          </aside>
+        )
+      }
+
+      <div class="toc-mobile">
+        <Toc headings={headings} variant="inline" />
+      </div>
+
+      <div class="prose">
+        <Content />
+      </div>
+
+      <footer class="post-footer">
+        {
+          data.tags.length > 0 && (
+            <ul class="tag-list" aria-label="Tags">
+              {data.tags.map((t) => (
+                <li>
+                  <a class="tag" href={`/blog/tags/${tagSlug(t)}/`}>
+                    #{t}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+
+        {
+          data.crossposts.length > 0 && (
+            <p class="crossposts">
+              Also on:{' '}
+              {data.crossposts.map((c, i) => (
+                <>
+                  {i > 0 && ', '}
+                  <a href={c.url}>{c.label}</a>
+                </>
+              ))}
+            </p>
+          )
+        }
+
+        <Share url={url} title={data.title} />
+        <Subscribe />
+
+        <nav class="pager" aria-label="More posts">
+          {
+            older ? (
+              <a href={postUrl(older)} class="pager-link">
+                <span class="kicker">← Older</span>
+                <span>{older.data.title}</span>
+              </a>
+            ) : (
+              <span />
+            )
+          }
+          {
+            newer && (
+              <a href={postUrl(newer)} class="pager-link next">
+                <span class="kicker">Newer →</span>
+                <span>{newer.data.title}</span>
+              </a>
+            )
+          }
+        </nav>
+      </footer>
+    </article>
+
+    <aside class="rail">
+      <Toc headings={headings} variant="rail" />
+    </aside>
+  </div>
+</Base>
+
+<script>
+  // Reading progress
+  const bar = document.querySelector<HTMLElement>('[data-progress]');
+  const article = document.querySelector<HTMLElement>('[data-article]');
+  if (bar && article) {
+    const update = () => {
+      const rect = article.getBoundingClientRect();
+      const total = rect.height - window.innerHeight;
+      const pct = total > 0 ? Math.min(1, Math.max(0, -rect.top / total)) : 1;
+      bar.style.transform = `scaleX(${pct})`;
+    };
+    document.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  }
+
+  // Code blocks: language label + copy button
+  document.querySelectorAll<HTMLPreElement>('.prose pre.astro-code').forEach((pre) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'code-block';
+    const head = document.createElement('div');
+    head.className = 'code-block-header';
+    const lang = pre.dataset.language;
+    head.innerHTML = `<span>${lang && !['plaintext', 'text', 'txt'].includes(lang) ? lang : ''}</span>`;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'copy-btn';
+    btn.textContent = 'copy';
+    btn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(pre.innerText);
+        btn.textContent = 'copied';
+      } catch {
+        btn.textContent = 'failed';
+      }
+      setTimeout(() => (btn.textContent = 'copy'), 1500);
+    });
+    head.appendChild(btn);
+    pre.replaceWith(wrap);
+    wrap.append(head, pre);
+  });
+
+  // Horizontally scrollable tables
+  document.querySelectorAll('.prose table').forEach((table) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'table-wrap';
+    table.replaceWith(wrap);
+    wrap.appendChild(table);
+  });
+
+  // Highlight the current section in the TOC rail
+  const links = new Map<string, HTMLAnchorElement>();
+  document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]').forEach((a) => links.set(a.dataset.tocLink!, a));
+  if (links.size) {
+    const headings = [...document.querySelectorAll<HTMLElement>('.prose h2[id], .prose h3[id]')].filter((h) =>
+      links.has(h.id)
+    );
+    const setActive = () => {
+      let current = headings[0];
+      for (const h of headings) {
+        if (h.getBoundingClientRect().top < 140) current = h;
+        else break;
+      }
+      links.forEach((a) => a.classList.remove('active'));
+      if (current) links.get(current.id)?.classList.add('active');
+    };
+    document.addEventListener('scroll', setActive, { passive: true });
+    setActive();
+  }
+</script>
+
+<style>
+  .progress {
+    position: fixed;
+    inset: 0 0 auto;
+    height: 2px;
+    z-index: 60;
+    pointer-events: none;
+  }
+
+  .progress span {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    transform-origin: 0 50%;
+    transform: scaleX(0);
+  }
+
+  .post-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) min(var(--measure), 100%) minmax(0, 1fr);
+    padding-inline: 1.25rem;
+  }
+
+  .post {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    padding-top: 2.5rem;
+  }
+
+  .rail {
+    grid-column: 3;
+    grid-row: 1;
+    display: none;
+    padding: 6rem 0 0 3rem;
+  }
+
+  .rail :global(.toc-rail) {
+    position: sticky;
+    top: 5.5rem;
+    max-width: 16rem;
+  }
+
+  @media (min-width: 1200px) {
+    .rail {
+      display: block;
+    }
+    .toc-mobile {
+      display: none;
+    }
+  }
+
+  .back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.875rem;
+    color: var(--muted);
+    text-decoration: none;
+  }
+
+  .back:hover {
+    color: var(--accent);
+  }
+
+  .post-header {
+    margin: 2rem 0 2.5rem;
+  }
+
+  .post-header h1 {
+    font-size: clamp(1.9rem, 5vw, 2.6rem);
+    font-weight: 750;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+    margin: 0.6rem 0 1rem;
+  }
+
+  .dek {
+    font-family: var(--font-serif);
+    font-size: clamp(1.1rem, 2.6vw, 1.3rem);
+    line-height: 1.5;
+    color: var(--text-2);
+    margin: 0 0 1.5rem;
+    text-wrap: pretty;
+  }
+
+  .byline {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .byline > div {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.35;
+  }
+
+  .author {
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .dates {
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+
+  .draft-banner {
+    margin-top: 1rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    background: color-mix(in srgb, var(--callout-warning) 12%, transparent);
+    color: var(--callout-warning);
+  }
+
+  .series {
+    margin-bottom: 2rem;
+    padding: 1rem 1.2rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+  }
+
+  .series-title {
+    margin: 0 0 0.5rem;
+    color: var(--muted);
+  }
+
+  .series ol {
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+
+  .series [aria-current] {
+    font-weight: 600;
+  }
+
+  .post-footer {
+    margin-top: 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .crossposts {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  .pager {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .pager-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.92rem;
+    line-height: 1.4;
+  }
+
+  .pager-link:hover {
+    border-color: var(--accent);
+  }
+
+  .pager-link.next {
+    text-align: right;
+    grid-column: 2;
+  }
+
+  @media (max-width: 560px) {
+    .pager {
+      grid-template-columns: 1fr;
+    }
+    .pager-link.next {
+      grid-column: 1;
+    }
+  }
+</style>

@@ -1,0 +1,170 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import { projects } from '../../data/projects';
+import { caseStudies } from '../../data/caseStudies';
+---
+
+<Base title="Projects" description="Side projects, hackathons and production case studies by Akash Rai.">
+  <div class="container">
+    <header class="page-header">
+      <p class="kicker">~/projects</p>
+      <h1>Projects</h1>
+      <p>Things I've built outside of work, plus write-ups of production systems I've worked on.</p>
+    </header>
+
+    <h2 class="section-title">Case studies</h2>
+    <ul class="cases">
+      {
+        caseStudies.map((c) => (
+          <li>
+            <a href={`/projects/${c.slug}/`}>
+              <span class="kicker">
+                {c.category} · {c.period}
+              </span>
+              <span class="case-title">{c.title}</span>
+              <span class="case-sub">{c.subtitle}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <h2 class="section-title">Side projects</h2>
+    <div class="projects">
+      {
+        projects.map((p) => (
+          <article class="project">
+            <header>
+              <p class="kicker">
+                {p.period} · {p.status}
+              </p>
+              <h3>{p.title}</h3>
+              <p class="tagline">{p.tagline}</p>
+            </header>
+            <p>{p.summary}</p>
+            <ul class="features">
+              {p.features.map((f) => (
+                <li>{f}</li>
+              ))}
+            </ul>
+            <ul class="tag-list">
+              {p.stack.map((s) => (
+                <li class="tag">{s}</li>
+              ))}
+            </ul>
+            {(p.github || p.demoUrl) && (
+              <p class="links">
+                {p.github && (
+                  <a href={p.github}>
+                    <Icon name="github" /> Code
+                  </a>
+                )}
+                {p.demoUrl && (
+                  <a href={p.demoUrl}>
+                    <Icon name="external" /> Demo
+                  </a>
+                )}
+              </p>
+            )}
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</Base>
+
+<style>
+  .cases {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .cases a {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 1.1rem 0;
+    border-top: 1px solid var(--border);
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .cases li:last-child a {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .case-title {
+    font-weight: 600;
+    font-size: 1.05rem;
+    line-height: 1.4;
+    color: var(--text);
+  }
+
+  .cases a:hover .case-title {
+    color: var(--accent);
+  }
+
+  .case-sub {
+    color: var(--text-2);
+    font-size: 0.92rem;
+  }
+
+  .projects {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .project {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    background: var(--bg-raised);
+  }
+
+  .project h3 {
+    margin: 0.35rem 0 0.25rem;
+    font-size: 1.2rem;
+  }
+
+  .tagline {
+    margin: 0;
+    color: var(--text-2);
+  }
+
+  .project > p {
+    margin: 1rem 0 0;
+    color: var(--text-2);
+    font-size: 0.95rem;
+  }
+
+  .features {
+    margin: 0.85rem 0 1.1rem;
+    padding-left: 1.2rem;
+    font-size: 0.92rem;
+    color: var(--text-2);
+  }
+
+  .features li + li {
+    margin-top: 0.35rem;
+  }
+
+  .features li::marker {
+    color: var(--muted);
+  }
+
+  .project .links {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+  }
+
+  .links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+</style>

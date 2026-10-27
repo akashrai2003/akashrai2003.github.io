@@ -1,0 +1,140 @@
+---
+import '../../styles/prose.css';
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import { caseStudies, type CaseStudy } from '../../data/caseStudies';
+
+export function getStaticPaths() {
+  return caseStudies.map((c) => ({ params: { slug: c.slug }, props: { c } }));
+}
+
+const { c } = Astro.props as { c: CaseStudy };
+---
+
+<Base title={c.title} description={c.subtitle}>
+  <article class="container">
+    <a class="back" href="/projects/"><Icon name="arrowLeft" /> All projects</a>
+    <header class="page-header">
+      <p class="kicker">{c.category} · {c.organization} · {c.period}</p>
+      <h1>{c.title}</h1>
+      <p>{c.subtitle}</p>
+    </header>
+
+    {c.publicSafeNotice && <p class="notice">{c.publicSafeNotice}</p>}
+
+    <dl class="metrics">
+      {
+        c.metrics.map((m) => (
+          <div>
+            <dt>{m.label}</dt>
+            <dd>{m.value}</dd>
+          </div>
+        ))
+      }
+    </dl>
+
+    <div class="prose">
+      <h2 id="context">Context</h2>
+      <p>{c.context}</p>
+
+      <h2 id="constraints">Constraints</h2>
+      <ul>{c.constraints.map((x) => <li>{x}</li>)}</ul>
+
+      <h2 id="why-the-obvious-approach-failed">Why the obvious approach failed</h2>
+      <p>{c.whyStandardFailed}</p>
+
+      <h2 id="architecture">Architecture</h2>
+      <p>{c.architectureSummary}</p>
+      {c.architectureDiagram && <pre><code>{c.architectureDiagram}</code></pre>}
+
+      <h2 id="key-decisions">Key decisions</h2>
+      {
+        c.keyDecisions.map((d) => (
+          <>
+            <h3>{d.title}</h3>
+            <p>{d.explanation}</p>
+          </>
+        ))
+      }
+
+      <h2 id="results">Results</h2>
+      <ul>{c.results.map((x) => <li>{x}</li>)}</ul>
+
+      <h2 id="what-broke">What broke &amp; how I debugged it</h2>
+      <p>{c.failureModesAndDebugging}</p>
+
+      <h2 id="tradeoffs">Trade-offs</h2>
+      <p>{c.tradeoffs}</p>
+
+      <h2 id="next">What I'd do next</h2>
+      <p>{c.futureImprovements}</p>
+    </div>
+
+    <ul class="tag-list tags">{c.tags.map((t) => <li class="tag">{t}</li>)}</ul>
+  </article>
+</Base>
+
+<style>
+  article {
+    padding-top: 2.5rem;
+  }
+
+  .back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.875rem;
+    color: var(--muted);
+    text-decoration: none;
+  }
+
+  .page-header {
+    padding-top: 2rem;
+  }
+
+  .notice {
+    font-size: 0.88rem;
+    color: var(--text-2);
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+  }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    gap: 1px;
+    margin: 1.5rem 0 2.5rem;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .metrics div {
+    background: var(--bg-raised);
+    padding: 0.9rem 1rem;
+  }
+
+  dt {
+    font: 0.7rem var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+
+  dd {
+    margin: 0.3rem 0 0;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .prose h2:first-child {
+    margin-top: 0;
+  }
+
+  .tags {
+    margin-top: 3rem;
+  }
+</style>
