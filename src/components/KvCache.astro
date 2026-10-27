@@ -1,0 +1,231 @@
+---
+// A tiny paged-KV-cache simulation: requests arrive, prefill a chunk of blocks,
+// decode one block at a time into whatever free block is available (pages are
+// non-contiguous), then finish and release their memory.
+const COLS = 16;
+const ROWS = 10;
+const total = COLS * ROWS;
+
+// Deterministic first frame so the panel looks alive without JavaScript.
+let seed = 7;
+const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+const initial = Array.from({ length: total }, () => (rand() < 0.55 ? Math.floor(rand() * 6) : -1));
+const used = initial.filter((v) => v >= 0).length;
+---
+
+<figure class="kv" data-kv data-cols={COLS} data-rows={ROWS} aria-label="Animated illustration of a paged KV cache">
+  <div class="kv-head">
+    <span class="kv-title">kv_cache<span class="dim">.paged</span></span>
+    <span class="kv-live"><span class="pulse"></span>live</span>
+  </div>
+  <div class="grid" style={`--cols:${COLS}`}>
+    {initial.map((v) => <span class="b" data-s={v >= 0 ? v : undefined} />)}
+  </div>
+  <figcaption class="kv-foot">
+    <span><b data-kv-seqs>6</b> seqs</span>
+    <span><b data-kv-used>{used}</b>/{total} blocks</span>
+    <span><b data-kv-util>{Math.round((used / total) * 100)}</b>% util</span>
+  </figcaption>
+</figure>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-kv]');
+  if (root) {
+    const cells = [...root.querySelectorAll<HTMLElement>('.b')];
+    const total = cells.length;
+    const seqsEl = root.querySelector('[data-kv-seqs]')!;
+    const usedEl = root.querySelector('[data-kv-used]')!;
+    const utilEl = root.querySelector('[data-kv-util]')!;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    type Seq = { color: number; blocks: number[]; target: number; done: number };
+    const owner: (Seq | null)[] = new Array(total).fill(null);
+    const seqs: Seq[] = [];
+    let colorCursor = 0;
+
+    const free = () => owner.flatMap((o, i) => (o ? [] : [i]));
+    const paint = (i: number) => {
+      const s = owner[i];
+      if (s) cells[i].dataset.s = String(s.color);
+      else delete cells[i].dataset.s;
+    };
+    const alloc = (s: Seq) => {
+      const f = free();
+      if (!f.length) return false;
+      const i = f[Math.floor(Math.random() * f.length)];
+      owner[i] = s;
+      s.blocks.push(i);
+      cells[i].classList.remove('new');
+      void cells[i].offsetWidth;
+      cells[i].classList.add('new');
+      paint(i);
+      return true;
+    };
+
+    // Start from an empty cache: clear the static first frame.
+    cells.forEach((c) => delete c.dataset.s);
+
+    const tick = () => {
+      const f = free().length;
+      if (seqs.length < 8 && f > 12 && Math.random() < 0.45) {
+        const s: Seq = { color: colorCursor++ % 6, blocks: [], target: 6 + Math.floor(Math.random() * 18), done: 0 };
+        seqs.push(s);
+        const prefill = Math.ceil(s.target * 0.4); // chunked prefill lands as a burst
+        for (let k = 0; k < prefill; k++) alloc(s);
+      }
+      for (const s of [...seqs]) {
+        if (s.blocks.length < s.target) {
+          if (Math.random() < 0.55 && !alloc(s)) s.target = s.blocks.length; // out of blocks: stop growing
+        } else if (++s.done > 4) {
+          s.blocks.forEach((i) => {
+            owner[i] = null;
+            paint(i);
+          });
+          seqs.splice(seqs.indexOf(s), 1);
+        }
+      }
+      const used = total - free().length;
+      seqsEl.textContent = String(seqs.length);
+      usedEl.textContent = String(used);
+      utilEl.textContent = String(Math.round((used / total) * 100));
+    };
+
+    if (reduce) {
+      for (let k = 0; k < 60; k++) tick();
+    } else {
+      for (let k = 0; k < 25; k++) tick();
+      let timer: number | undefined;
+      const start = () => (timer ??= window.setInterval(tick, 260));
+      const stop = () => {
+        clearInterval(timer);
+        timer = undefined;
+      };
+      new IntersectionObserver(([e]) => (e.isIntersecting && !document.hidden ? start() : stop())).observe(root);
+      document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+    }
+  }
+</script>
+
+<style>
+  .kv {
+    margin: 0;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--bg-raised);
+    box-shadow: var(--shadow);
+    padding: 1rem 1.1rem 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .kv-head,
+  .kv-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .kv-head {
+    margin-bottom: 0.85rem;
+  }
+
+  .kv-title {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .dim {
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .kv-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .pulse {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 0 var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), 1fr);
+    gap: 3px;
+  }
+
+  .b {
+    aspect-ratio: 1;
+    border-radius: 3px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    transition: background-color 0.35s, border-color 0.35s;
+  }
+
+  .b[data-s] {
+    border-color: transparent;
+  }
+
+  .b[data-s='0'] { background: #f97316; }
+  .b[data-s='1'] { background: #14b8a6; }
+  .b[data-s='2'] { background: #f59e0b; }
+  .b[data-s='3'] { background: #6366f1; }
+  .b[data-s='4'] { background: #f43f5e; }
+  .b[data-s='5'] { background: #0ea5e9; }
+
+  .b.new {
+    animation: pop 0.35s ease-out;
+  }
+
+  .kv-foot {
+    margin-top: 0.85rem;
+    flex-wrap: wrap;
+  }
+
+  .kv-foot b {
+    color: var(--text);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  @keyframes pop {
+    from {
+      transform: scale(0.4);
+    }
+    to {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent);
+    }
+    70% {
+      box-shadow: 0 0 0 6px transparent;
+    }
+    100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pulse,
+    .b.new {
+      animation: none;
+    }
+    .b {
+      transition: none;
+    }
+  }
+</style>

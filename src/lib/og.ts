@@ -9,6 +9,7 @@ const font = (pkg: string, file: string) => readFileSync(require.resolve(`${pkg}
 const fonts = [
   { name: 'Inter', data: font('@fontsource/inter', 'inter-latin-400-normal.woff'), weight: 400 as const },
   { name: 'Inter', data: font('@fontsource/inter', 'inter-latin-700-normal.woff'), weight: 700 as const },
+  { name: 'Display', data: font('@fontsource/bricolage-grotesque', 'bricolage-grotesque-latin-700-normal.woff'), weight: 700 as const },
   { name: 'Mono', data: font('@fontsource/jetbrains-mono', 'jetbrains-mono-latin-400-normal.woff'), weight: 400 as const }
 ];
 
@@ -33,25 +34,25 @@ export async function renderOgImage(opts: { title: string; kicker: string; foote
       flexDirection: 'column',
       justifyContent: 'space-between',
       padding: '72px 80px',
-      background: '#0e1110',
-      color: '#e6eae7',
+      background: '#111113',
+      color: '#ededef',
       fontFamily: 'Inter',
-      borderTop: '10px solid #5ee08f'
+      borderTop: '10px solid #fb923c'
     },
-    h('div', { display: 'flex', fontFamily: 'Mono', fontSize: 26, color: '#5ee08f' }, opts.kicker),
+    h('div', { display: 'flex', fontFamily: 'Mono', fontSize: 26, color: '#fb923c' }, opts.kicker),
     h(
       'div',
-      { display: 'flex', fontSize: titleSize, fontWeight: 700, lineHeight: 1.12, letterSpacing: '-0.02em' },
+      { display: 'flex', fontFamily: 'Display', fontSize: titleSize, fontWeight: 700, lineHeight: 1.08, letterSpacing: '-0.03em' },
       opts.title
     ),
     h(
       'div',
-      { display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 28, color: '#87918b' },
+      { display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 28, color: '#8b8a91' },
       h(
         'div',
         { display: 'flex', alignItems: 'center', gap: '18px' },
         { type: 'img', props: { src: logo, width: 56, height: 56, style: { borderRadius: 10 } } },
-        h('div', { display: 'flex', color: '#e6eae7', fontWeight: 700 }, 'Akash Rai')
+        h('div', { display: 'flex', color: '#ededef', fontWeight: 700 }, 'Akash Rai')
       ),
       h('div', { display: 'flex', fontFamily: 'Mono', fontSize: 24 }, opts.footer)
     )

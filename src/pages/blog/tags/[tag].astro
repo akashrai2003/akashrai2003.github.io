@@ -22,7 +22,7 @@ const { name, posts } = Astro.props;
 <Base title={`Posts tagged “${name}”`} description={`Writing about ${name}.`}>
   <div class="container">
     <header class="page-header">
-      <p class="kicker"><a href="/blog/">~/writing</a> / tags</p>
+      <p class="kicker"><a href="/blog/">Writing</a> / Tag</p>
       <h1>#{name}</h1>
       <p>{posts.length} {posts.length === 1 ? 'post' : 'posts'}</p>
     </header>

@@ -1,69 +1,64 @@
+@import '@fontsource-variable/bricolage-grotesque';
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/source-serif-4';
 @import '@fontsource-variable/jetbrains-mono';
 
 /* ---------- Tokens ---------- */
 :root {
+  --font-display: 'Bricolage Grotesque Variable', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-serif: 'Source Serif 4 Variable', Charter, 'Iowan Old Style', Georgia, serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --bg: #fbfbf8;
-  --bg-soft: #f2f3ef;
+  --bg: #faf9f6;
+  --bg-soft: #f2f0eb;
   --bg-raised: #ffffff;
-  --text: #1a1d1b;
-  --text-2: #3f4642;
-  --muted: #6b736e;
-  --border: #e3e5df;
-  --border-strong: #cfd3cb;
-  --accent: #0d7a43;
-  --accent-hover: #095c32;
-  --accent-soft: #e5f3ea;
-  --mark: #fff3bf;
-  --code-bg: #f3f4f0;
-  --code-text: #9a3412;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.04);
+  --text: #18181b;
+  --text-2: #44434a;
+  --muted: #6f6d74;
+  --border: #e6e3dc;
+  --border-strong: #d2cec5;
+  --accent: #c2410c;
+  --accent-hover: #9a3412;
+  --accent-soft: #fdeee3;
+  --accent-2: #0f766e;
+  --mark: #ffedc2;
+  --code-bg: #f3f1ec;
+  --code-text: #3f3d45;
+  --shadow: 0 1px 2px rgb(24 24 27 / 0.04), 0 8px 24px -12px rgb(24 24 27 / 0.12);
 
   --callout-note: #2563eb;
-  --callout-tip: #0d7a43;
+  --callout-tip: #0f766e;
   --callout-important: #7c3aed;
   --callout-warning: #b45309;
   --callout-caution: #dc2626;
 
-  /* Terminal window stays dark in both themes */
-  --term-bg: #0a0e0c;
-  --term-bar: #141a17;
-  --term-border: #1f2a24;
-  --term-text: #b8e6c6;
-  --term-bright: #e9fbee;
-  --term-green: #4ade80;
-  --term-dim: #6f8f7b;
-
   --measure: 42rem;
-  --wide: 68rem;
+  --wide: 70rem;
   --radius: 10px;
   color-scheme: light;
 }
 
 :root[data-theme='dark'] {
-  --bg: #0e1110;
-  --bg-soft: #151a17;
-  --bg-raised: #131816;
-  --text: #e6eae7;
-  --text-2: #b9c2bc;
-  --muted: #87918b;
-  --border: #232b27;
-  --border-strong: #34403a;
-  --accent: #5ee08f;
-  --accent-hover: #8af0b0;
-  --accent-soft: rgb(94 224 143 / 0.1);
-  --mark: rgb(250 204 21 / 0.25);
-  --code-bg: #171d1a;
-  --code-text: #fdba74;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.25);
+  --bg: #111113;
+  --bg-soft: #18181b;
+  --bg-raised: #161618;
+  --text: #ededef;
+  --text-2: #b8b7bd;
+  --muted: #8b8a91;
+  --border: #26262a;
+  --border-strong: #3a3a40;
+  --accent: #fb923c;
+  --accent-hover: #fdba74;
+  --accent-soft: rgb(251 146 60 / 0.12);
+  --accent-2: #5eead4;
+  --mark: rgb(250 204 21 / 0.22);
+  --code-bg: #1a1a1d;
+  --code-text: #e4e4e7;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 12px 32px -12px rgb(0 0 0 / 0.5);
 
   --callout-note: #60a5fa;
-  --callout-tip: #5ee08f;
+  --callout-tip: #5eead4;
   --callout-important: #a78bfa;
   --callout-warning: #fbbf24;
   --callout-caution: #f87171;
@@ -140,7 +135,8 @@ h1,
 h2,
 h3,
 h4 {
-  line-height: 1.25;
+  font-family: var(--font-display);
+  line-height: 1.2;
   letter-spacing: -0.015em;
   color: var(--text);
   text-wrap: balance;
@@ -191,9 +187,14 @@ h4 {
 /* ---------- Shared bits ---------- */
 .kicker {
   font-family: var(--font-mono);
-  font-size: 0.78rem;
-  letter-spacing: 0.02em;
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--muted);
+}
+
+.kicker-accent {
+  color: var(--accent);
 }
 
 .page-header {
@@ -201,9 +202,10 @@ h4 {
 }
 
 .page-header h1 {
-  font-size: clamp(1.9rem, 4.5vw, 2.5rem);
-  margin: 0.4rem 0 0.75rem;
-  font-weight: 700;
+  font-size: clamp(2.2rem, 6vw, 3.25rem);
+  margin: 0.5rem 0 0.75rem;
+  font-weight: 750;
+  letter-spacing: -0.035em;
 }
 
 .page-header p {

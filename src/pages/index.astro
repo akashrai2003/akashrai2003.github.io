@@ -1,506 +1,544 @@
 ---
 import Base from '../layouts/Base.astro';
-import Logo from '../components/Logo.astro';
-import ThemeToggle from '../components/ThemeToggle.astro';
+import Icon from '../components/Icon.astro';
+import KvCache from '../components/KvCache.astro';
 import { getPosts, formatDate, postUrl } from '../lib/posts';
 import { siteConfig } from '../data/siteConfig';
-import { projects } from '../data/projects';
 import { caseStudies } from '../data/caseStudies';
 
 const posts = await getPosts();
-const latest = posts.slice(0, 4);
+const [lead, ...rest] = posts;
+const more = rest.slice(0, 4);
 
-const ascii = ` █████  ██   ██  █████  ███████ ██   ██
-██   ██ ██  ██  ██   ██ ██      ██   ██
-███████ █████   ███████ ███████ ███████
-██   ██ ██  ██  ██   ██      ██ ██   ██
-██   ██ ██   ██ ██   ██ ███████ ██   ██`;
+const work = ['indian-navy-platform', 'salesforce-saql-analytics', 'inkwell-desktop-ide']
+  .map((slug) => caseStudies.find((c) => c.slug === slug))
+  .filter((c) => c !== undefined);
 
-// Data for the interactive prompt (kept small; rendered into a JSON script tag).
-const termData = {
-  pages: {
-    writing: '/blog/',
-    blog: '/blog/',
-    projects: '/projects/',
-    experience: '/experience/',
-    resume: siteConfig.resumeUrl
+const numbers = [
+  { value: '22K→40K', label: 'context length', note: 'Ministral-3-8B FP8 on a 16 GB Blackwell card, via FP8 KV cache' },
+  { value: '~750', label: 'tokens / sec', note: 'aggregate output across batches of 10–20 requests' },
+  { value: '10×', label: 'cheaper RAG', note: 'replaced a managed RAG service with a custom retrieval cascade' },
+  { value: '12K★', label: 'kepler.gl', note: 'merged PR #3262 fixing stale LLM state in the AI assistant' }
+];
+
+const now = [
+  {
+    label: 'Shipping',
+    title: 'Air-gapped document intelligence',
+    body: 'On-prem LLM platform for defence: OCR, retrieval, agents and vLLM serving with zero internet access.'
   },
-  posts: posts.map((p) => ({ title: p.data.title, url: postUrl(p), date: formatDate(p.data.pubDate, 'short') })),
-  email: siteConfig.email,
-  github: siteConfig.github,
-  linkedin: siteConfig.linkedin
-};
+  {
+    label: 'Building',
+    title: 'Inkwell',
+    body: 'A local-first desktop IDE for reading technical PDFs, where every AI note links back to the exact spot on the page.'
+  },
+  {
+    label: 'Learning',
+    title: 'C++ and CUDA',
+    body: 'Going below the Python layer to understand inference runtimes and kernels from first principles.'
+  }
+];
 ---
 
-<Base bare>
-  <div class="home">
-    <div class="topbar">
-      <a class="rss" href="/rss.xml">rss</a>
-      <ThemeToggle />
+<Base>
+  <section class="hero container-wide">
+    <div class="hero-text">
+      <p class="kicker kicker-accent">AI engineer · Bengaluru</p>
+      <h1>
+        Hi, I'm Akash. I make LLMs run <em>fast</em>, <em>private</em> and useful, from retrieval down to the GPU.
+      </h1>
+      <p class="lede">
+        I build on-prem and air-gapped GenAI systems at Inferigence Quotient: document intelligence, agentic workflows, and
+        vLLM inference tuned on Blackwell GPUs. This site is where I write up what I learn shipping them.
+      </p>
+      <div class="cta">
+        <a class="btn btn-primary" href="/blog/">Read the writing <Icon name="arrowRight" /></a>
+        <a class="btn" href={siteConfig.resumeUrl}><Icon name="file" /> Résumé</a>
+        <span class="socials">
+          <a href={siteConfig.github} aria-label="GitHub"><Icon name="github" /></a>
+          <a href={siteConfig.linkedin} aria-label="LinkedIn"><Icon name="linkedin" /></a>
+          <a href={`mailto:${siteConfig.email}`} aria-label="Email"><Icon name="mail" /></a>
+        </span>
+      </div>
     </div>
+    <div class="hero-visual">
+      <KvCache />
+      <p class="visual-note">
+        What I think about all day: a paged KV cache. Requests grab free blocks wherever they are, grow token by token, and
+        hand memory back when they finish.
+      </p>
+    </div>
+  </section>
 
-    <section class="terminal" aria-label="About Akash Rai">
-      <div class="term-bar" aria-hidden="true">
-        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-        <span class="term-title">akash@bengaluru — zsh — 80×24</span>
-      </div>
-
-      <div class="term-body">
-        <div class="banner">
-          <Logo size={56} />
-          <pre class="ascii" role="img" aria-label="AKASH">{ascii}</pre>
+  <section class="numbers container-wide" aria-label="Selected results">
+    {
+      numbers.map((n) => (
+        <div class="stat">
+          <p class="stat-value">{n.value}</p>
+          <p class="stat-label">{n.label}</p>
+          <p class="stat-note">{n.note}</p>
         </div>
-        <h1 class="sr-only">{siteConfig.name}, {siteConfig.role}</h1>
+      ))
+    }
+  </section>
 
-        <div class="block">
-          <p class="cmd"><span class="ps">$</span> echo $PHILOSOPHY</p>
-          <p class="out quote">"building practical AI systems • passionate about inference &amp; diving deeper into the bare metal"</p>
-        </div>
+  <section class="container-wide block">
+    <div class="block-head">
+      <h2>Latest writing</h2>
+      <a href="/blog/">All posts <Icon name="arrowRight" /></a>
+    </div>
+    <div class="writing">
+      {
+        lead && (
+          <a class="lead-post" href={postUrl(lead)}>
+            <span class="kicker kicker-accent">{lead.data.category ?? 'Latest'}</span>
+            <span class="lead-title">{lead.data.title}</span>
+            <span class="lead-desc">{lead.data.description}</span>
+            <span class="kicker">{formatDate(lead.data.pubDate)}</span>
+          </a>
+        )
+      }
+      <ol class="post-rows">
+        {
+          more.map((p) => (
+            <li>
+              <a href={postUrl(p)}>
+                <span class="row-title">{p.data.title}</span>
+                <span class="kicker">
+                  {formatDate(p.data.pubDate, 'short')}
+                  {p.data.category && ` · ${p.data.category}`}
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
 
-        <div class="block">
-          <p class="cmd"><span class="ps">#</span> cat /proc/status</p>
-          <div class="out">
-            <p>
-              <span class="k">→ Currently:</span> AI Engineer at Inferigence Quotient, building on-prem &amp; air-gapped
-              GenAI platforms (document intelligence, agents, vLLM serving on Blackwell GPUs)
-            </p>
-            <p><span class="k">→ Previously:</span></p>
-            <ul class="tree">
-              <li><span class="br">├──</span> Independent consulting: SAQL analytics assistant &amp; graph-RAG for enterprise</li>
-              <li><span class="br">├──</span> AI Planet: LangGraph multi-agent assessment generator</li>
-              <li><span class="br">└──</span> DeepLogicAI: medical RAG pipeline, ~10× cheaper than managed RAG</li>
-            </ul>
-            <p>
-              <span class="k">→ Open source:</span>{' '}
-              <a href="https://github.com/keplergl/kepler.gl/pull/3262">kepler.gl #3262</a> (merged)
-            </p>
-            <p><span class="k">→ Learning:</span> C++ and CUDA, to understand inference runtimes from first principles</p>
-            <p><span class="k">→ Based in</span> Bengaluru, India <span class="dim">(open to remote)</span></p>
+  <section class="container-wide block">
+    <div class="block-head">
+      <h2>Right now</h2>
+    </div>
+    <div class="now">
+      {
+        now.map((n) => (
+          <div class="now-item">
+            <p class="kicker kicker-accent">{n.label}</p>
+            <h3>{n.title}</h3>
+            <p>{n.body}</p>
           </div>
-        </div>
+        ))
+      }
+    </div>
+  </section>
 
-        <div class="block">
-          <p class="cmd"><span class="ps">#</span> ls ~/pages/</p>
-          <ul class="out ls">
-            <li>
-              <a href="/blog/">writing/</a>
-              <span class="dim">— {posts.length} posts on inference, retrieval &amp; agents</span>
-            </li>
-            <li>
-              <a href="/projects/">projects/</a>
-              <span class="dim">— {projects.length} projects + {caseStudies.length} case studies</span>
-            </li>
-            <li><a href="/experience/">experience/</a> <span class="dim">— where I've worked &amp; what I shipped</span></li>
-            <li><a href={siteConfig.resumeUrl}>resume.pdf</a></li>
-          </ul>
-        </div>
+  <section class="container-wide block">
+    <div class="block-head">
+      <h2>Selected work</h2>
+      <a href="/projects/">All projects <Icon name="arrowRight" /></a>
+    </div>
+    <div class="work">
+      {
+        work.map((c) => (
+          <a class="work-card" href={`/projects/${c.slug}/`}>
+            <span class="kicker">{c.category}</span>
+            <span class="work-title">{c.title}</span>
+            <span class="work-sub">{c.subtitle}</span>
+            <span class="work-tags">
+              {c.tags.slice(0, 3).map((t) => (
+                <span class="tag">{t}</span>
+              ))}
+            </span>
+          </a>
+        ))
+      }
+    </div>
+  </section>
 
-        <div class="block">
-          <p class="cmd"><span class="ps">#</span> ls -t ~/writing | head -{latest.length}</p>
-          <ul class="out posts">
-            {
-              latest.map((p) => (
-                <li>
-                  <time datetime={p.data.pubDate.toISOString()}>{formatDate(p.data.pubDate, 'short')}</time>
-                  <a href={postUrl(p)}>{p.data.title}</a>
-                </li>
-              ))
-            }
-          </ul>
-        </div>
-
-        <div class="block">
-          <p class="cmd"><span class="ps">#</span> cat ~/.contact</p>
-          <ul class="out social">
-            <li><a href={siteConfig.github}>github</a></li>
-            <li><a href={siteConfig.linkedin}>linkedin</a></li>
-            <li><a href={`mailto:${siteConfig.email}`}>email</a></li>
-            <li><a href="/rss.xml">rss</a></li>
-          </ul>
-        </div>
-
-        <div class="history" data-history aria-live="polite"></div>
-        <form class="prompt" data-prompt autocomplete="off">
-          <label for="term-input" class="ps-full">akash@bengaluru:~$</label>
-          <input id="term-input" name="cmd" type="text" spellcheck="false" placeholder="type 'help'" />
-        </form>
+  <section class="container-wide block">
+    <div class="contact">
+      <div>
+        <h2>Let's talk</h2>
+        <p>
+          Open to AI systems and inference engineering roles (remote or Bengaluru), and to comparing notes with anyone running
+          LLMs on their own hardware.
+        </p>
       </div>
-    </section>
-  </div>
-
-  <script type="application/json" id="term-data" set:html={JSON.stringify(termData)} />
+      <div class="contact-actions">
+        <a class="btn btn-primary" href={`mailto:${siteConfig.email}`}><Icon name="mail" /> {siteConfig.email}</a>
+        <a class="btn" href={siteConfig.linkedin}><Icon name="linkedin" /> LinkedIn</a>
+      </div>
+    </div>
+  </section>
 </Base>
 
 <script>
   // Redirect links from the old hash-routed site (#post/slug, #writing…) to real URLs.
   const legacy = location.hash.replace(/^#\/?/, '');
-  if (legacy) {
-    const map: Record<string, string> = {
-      writing: '/blog/',
-      projects: '/projects/',
-      'case-studies': '/projects/',
-      experience: '/experience/',
-      stack: '/experience/',
-      contact: '/'
-    };
-    if (legacy.startsWith('post/')) location.replace(`/blog/${legacy.slice(5)}/`);
-    else if (map[legacy] && map[legacy] !== '/') location.replace(map[legacy]);
-  }
-
-  type TermData = {
-    pages: Record<string, string>;
-    posts: { title: string; url: string; date: string }[];
-    email: string;
-    github: string;
-    linkedin: string;
+  const map: Record<string, string> = {
+    writing: '/blog/',
+    projects: '/projects/',
+    'case-studies': '/projects/',
+    experience: '/experience/',
+    stack: '/experience/'
   };
-
-  const data: TermData = JSON.parse(document.getElementById('term-data')!.textContent!);
-  const form = document.querySelector<HTMLFormElement>('[data-prompt]')!;
-  const input = form.querySelector('input')!;
-  const history = document.querySelector<HTMLElement>('[data-history]')!;
-  const past: string[] = [];
-  let cursor = 0;
-
-  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
-  const link = (href: string, text: string) => `<a href="${esc(href)}">${esc(text)}</a>`;
-
-  const commands: Record<string, (args: string[]) => string> = {
-    help: () =>
-      [
-        'available commands:',
-        '  ls              list pages',
-        '  cd &lt;page&gt;       open a page (writing, projects, experience)',
-        '  posts           list all posts',
-        '  open &lt;n&gt;        open post number n',
-        '  resume          open resume.pdf',
-        '  contact         ways to reach me',
-        '  whoami · theme · clear'
-      ].join('\n'),
-    ls: () =>
-      ['writing/', 'projects/', 'experience/'].map((p) => link(data.pages[p.slice(0, -1)], p)).join('  ') +
-      '  ' +
-      link(data.pages.resume, 'resume.pdf'),
-    cd: ([p = '']) => {
-      const key = p.replace(/^~?\/?/, '').replace(/\/$/, '');
-      if (!key || key === '~') return '';
-      const url = data.pages[key];
-      if (!url) return `cd: no such directory: ${esc(p)}`;
-      location.href = url;
-      return `opening ${esc(key)}/ …`;
-    },
-    posts: () =>
-      data.posts.map((p, i) => `${String(i + 1).padStart(2)}  ${esc(p.date)}  ${link(p.url, p.title)}`).join('\n'),
-    open: ([n = '']) => {
-      const post = data.posts[Number(n) - 1];
-      if (!post) return data.pages[n] ? commands.cd([n]) : `open: try 'posts' then 'open 1'`;
-      location.href = post.url;
-      return `opening "${esc(post.title)}" …`;
-    },
-    resume: () => {
-      location.href = data.pages.resume;
-      return 'opening resume.pdf …';
-    },
-    contact: () =>
-      [
-        `email     ${link('mailto:' + data.email, data.email)}`,
-        `linkedin  ${link(data.linkedin, data.linkedin.replace(/^https?:\/\/(www\.)?/, ''))}`,
-        `github    ${link(data.github, data.github.replace(/^https?:\/\//, ''))}`
-      ].join('\n'),
-    whoami: () => 'akash — AI engineer. inference, retrieval, agents. currently learning CUDA.',
-    theme: () => {
-      document.querySelector<HTMLButtonElement>('[data-theme-toggle]')?.click();
-      return `theme: ${document.documentElement.getAttribute('data-theme')}`;
-    },
-    clear: () => {
-      history.innerHTML = '';
-      return '';
-    },
-    sudo: () => 'nice try.'
-  };
-  commands.blog = commands.writing = () => commands.cd(['writing']);
-  commands.cat = ([f = '']) => (f.includes('resume') ? commands.resume([]) : `cat: ${esc(f)}: try 'help'`);
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const raw = input.value.trim();
-    input.value = '';
-    if (!raw) return;
-    past.push(raw);
-    cursor = past.length;
-    const [name, ...args] = raw.split(/\s+/);
-    const fn = commands[name.toLowerCase()];
-    const out = fn ? fn(args) : `command not found: ${esc(name)} (try 'help')`;
-    if (name.toLowerCase() === 'clear') return;
-    const entry = document.createElement('div');
-    entry.innerHTML = `<p class="cmd"><span class="ps">$</span> ${esc(raw)}</p>${out ? `<pre class="out">${out}</pre>` : ''}`;
-    history.appendChild(entry);
-    form.scrollIntoView({ block: 'nearest' });
-  });
-
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowUp' && cursor > 0) input.value = past[--cursor];
-    else if (e.key === 'ArrowDown') input.value = past[++cursor] ?? ((cursor = past.length), '');
-    else return;
-    e.preventDefault();
-  });
+  if (legacy.startsWith('post/')) location.replace(`/blog/${legacy.slice(5)}/`);
+  else if (map[legacy]) location.replace(map[legacy]);
 </script>
 
 <style>
-  .home {
-    max-width: 52rem;
-    margin: 0 auto;
-    padding: 1.25rem 1rem 0;
-  }
-
-  .topbar {
-    display: flex;
-    justify-content: flex-end;
+  .hero {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 3.5rem;
     align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1.25rem;
+    padding-block: 4.5rem 3.5rem;
   }
 
-  .rss {
-    font: 0.8rem var(--font-mono);
+  h1 {
+    font-size: clamp(2.1rem, 4.6vw, 3.4rem);
+    font-weight: 750;
+    letter-spacing: -0.04em;
+    line-height: 1.06;
+    margin: 0.9rem 0 1.25rem;
+  }
+
+  h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .lede {
+    font-size: 1.1rem;
+    color: var(--text-2);
+    max-width: 34rem;
+    margin: 0 0 1.75rem;
+  }
+
+  .cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .socials {
+    display: inline-flex;
+    gap: 0.15rem;
+    margin-left: 0.4rem;
+  }
+
+  .socials a {
+    display: inline-grid;
+    place-items: center;
+    width: 2.3rem;
+    height: 2.3rem;
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 1.1rem;
+  }
+
+  .socials a:hover {
+    color: var(--accent);
+    background: var(--bg-soft);
+  }
+
+  .visual-note {
+    margin: 0.85rem 0.25rem 0;
+    font-size: 0.82rem;
+    line-height: 1.5;
     color: var(--muted);
   }
 
-  .terminal {
-    background: var(--term-bg);
-    border: 1px solid var(--term-border);
-    border-radius: 12px;
-    box-shadow: 0 20px 60px -20px rgb(0 0 0 / 0.45);
-    overflow: hidden;
-    color: var(--term-text);
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-    line-height: 1.7;
+  .numbers {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-block: 1px solid var(--border);
   }
 
-  .term-bar {
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0.7rem 1rem;
-    background: var(--term-bar);
-    border-bottom: 1px solid var(--term-border);
+  .stat {
+    padding: 1.6rem 1.25rem 1.5rem;
   }
 
-  .dot {
-    width: 0.75rem;
-    height: 0.75rem;
-    border-radius: 50%;
+  .stat + .stat {
+    border-left: 1px solid var(--border);
   }
 
-  .r { background: #ff5f57; }
-  .y { background: #febc2e; }
-  .g { background: #28c840; }
-
-  .term-title {
-    margin-left: 0.75rem;
-    font-size: 0.75rem;
-    color: var(--term-dim);
-  }
-
-  .term-body {
-    padding: 1.75rem 1.75rem 1.5rem;
-  }
-
-  .banner {
-    display: flex;
-    align-items: center;
-    gap: 1.25rem;
-    margin-bottom: 1.75rem;
-  }
-
-  .ascii {
+  .stat p {
     margin: 0;
-    font-family: var(--font-mono);
-    font-size: clamp(0.4rem, 1.9vw, 0.9rem);
+  }
+
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 2.1rem;
+    font-weight: 750;
+    letter-spacing: -0.03em;
     line-height: 1.1;
-    color: var(--term-green);
-    text-shadow: 0 0 14px rgb(74 222 128 / 0.35);
-    overflow: hidden;
+  }
+
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    margin-top: 0.35rem !important;
+  }
+
+  .stat-note {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 0.5rem !important;
+    line-height: 1.45;
   }
 
   .block {
-    padding-block: 1.1rem;
-    border-top: 1px solid var(--term-border);
+    padding-top: 4.5rem;
   }
 
-  .block:first-of-type {
-    border-top: 0;
-  }
-
-  .terminal p,
-  .terminal ul {
-    margin: 0;
-  }
-
-  .terminal ul {
-    list-style: none;
-    padding: 0;
-  }
-
-  .cmd {
-    color: var(--term-bright);
-    font-weight: 600;
-    margin-bottom: 0.4rem !important;
-  }
-
-  .ps {
-    color: var(--term-dim);
-    font-weight: 400;
-    margin-right: 0.35rem;
-  }
-
-  .out {
-    padding-left: 1rem;
-  }
-
-  .out p + p {
-    margin-top: 0.35rem;
-  }
-
-  .quote {
-    color: var(--term-green);
-    font-weight: 600;
-  }
-
-  .k {
-    color: var(--term-green);
-  }
-
-  .dim {
-    color: var(--term-dim);
-  }
-
-  .ls .dim {
-    margin-left: 0.6ch;
-  }
-
-  .tree {
-    padding-left: 1.25rem !important;
-  }
-
-  .br {
-    color: var(--term-dim);
-  }
-
-  .terminal a {
-    color: var(--term-green);
-    text-decoration: underline;
-    text-decoration-color: rgb(74 222 128 / 0.4);
-    text-underline-offset: 3px;
-  }
-
-  .terminal a:hover {
-    color: var(--term-bright);
-    text-decoration-color: currentColor;
-  }
-
-  .ls li,
-  .posts li {
-    padding-block: 0.15rem;
-  }
-
-  .ls a::before {
-    content: '📂 ';
-    display: inline-block;
-    margin-right: 0.15rem;
-  }
-
-  .ls li:last-child a::before {
-    content: '📄 ';
-  }
-
-  .posts li {
-    display: grid;
-    grid-template-columns: 7.5rem 1fr;
-    gap: 0.75rem;
-  }
-
-  .posts time {
-    color: var(--term-dim);
-  }
-
-  .social {
+  .block-head {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem 1.5rem;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
   }
 
-  .social li::before {
-    content: '• ';
-    color: var(--term-dim);
-  }
-
-  .history :global(.cmd) {
-    margin-top: 0.75rem !important;
-  }
-
-  .history :global(pre.out) {
+  .block-head h2 {
     margin: 0;
-    font: inherit;
-    white-space: pre-wrap;
-    color: var(--term-text);
+    font-size: clamp(1.5rem, 3vw, 1.9rem);
+    font-weight: 750;
+    letter-spacing: -0.03em;
   }
 
-  .prompt {
-    display: flex;
+  .block-head a {
+    display: inline-flex;
     align-items: center;
-    gap: 0.6rem;
-    margin-top: 0.75rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--term-border);
-  }
-
-  .ps-full {
-    color: var(--term-green);
-    font-weight: 600;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+    text-decoration: none;
     white-space: nowrap;
   }
 
-  .prompt input {
+  .writing {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 2rem;
+  }
+
+  .lead-post {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.75rem;
+    border-radius: 16px;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 0.15s;
+  }
+
+  .lead-post:hover {
+    border-color: var(--accent);
+  }
+
+  .lead-title {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+  }
+
+  .lead-desc {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    color: var(--text-2);
     flex: 1;
-    min-width: 0;
+  }
+
+  .post-rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .post-rows a {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .post-rows li:first-child a {
+    padding-top: 0;
+  }
+
+  .row-title {
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .post-rows a:hover .row-title,
+  .work-card:hover .work-title {
+    color: var(--accent);
+  }
+
+  .now {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  .now-item {
+    padding: 1.4rem;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+
+  .now-item h3 {
+    margin: 0.6rem 0 0.4rem;
+    font-size: 1.15rem;
+  }
+
+  .now-item > p:last-child {
+    margin: 0;
+    color: var(--text-2);
+    font-size: 0.92rem;
+  }
+
+  .work {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  .work-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 1.4rem;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--bg-raised);
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+
+  .work-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .work-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.1rem;
+    line-height: 1.3;
+  }
+
+  .work-sub {
+    font-size: 0.88rem;
+    color: var(--text-2);
+    flex: 1;
+  }
+
+  .work-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.4rem;
+  }
+
+  .contact {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 2rem;
+    border-radius: 18px;
+    background: var(--text);
+    color: var(--bg);
+  }
+
+  .contact h2 {
+    margin: 0 0 0.4rem;
+    color: var(--bg);
+    font-size: 1.6rem;
+    letter-spacing: -0.03em;
+  }
+
+  .contact p {
+    margin: 0;
+    max-width: 34rem;
+    color: color-mix(in srgb, var(--bg) 75%, transparent);
+  }
+
+  .contact-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .contact .btn {
     background: transparent;
-    border: 0;
-    outline: 0;
-    color: var(--term-bright);
-    font: inherit;
-    caret-color: var(--term-green);
+    color: var(--bg);
+    border-color: color-mix(in srgb, var(--bg) 35%, transparent);
   }
 
-  .prompt input::placeholder {
-    color: var(--term-dim);
+  .contact .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
   }
 
-  @media (max-width: 560px) {
-    .terminal {
-      font-size: 0.82rem;
-    }
-    .term-body {
-      padding: 1.25rem 1rem;
-    }
-    .banner :global(.logo) {
-      width: 40px;
-      height: 40px;
-    }
-    .out {
-      padding-left: 0.25rem;
-    }
-    .tree {
-      padding-left: 0.5rem !important;
-    }
-    .posts li {
+  .contact .btn:hover {
+    border-color: var(--bg);
+    color: var(--bg);
+  }
+
+  @media (max-width: 900px) {
+    .hero {
       grid-template-columns: 1fr;
-      gap: 0;
-      padding-block: 0.35rem;
+      gap: 2.5rem;
+      padding-top: 3rem;
     }
-    .term-title {
-      display: none;
+    .numbers {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .stat:nth-child(3) {
+      border-left: 0;
+    }
+    .stat:nth-child(n + 3) {
+      border-top: 1px solid var(--border);
+    }
+    .writing,
+    .now,
+    .work {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .stat {
+      padding: 1.25rem 0.75rem;
+    }
+    .stat-value {
+      font-size: 1.6rem;
+    }
+    .socials {
+      margin-left: 0;
+    }
+    .lead-post,
+    .contact {
+      padding: 1.4rem;
     }
   }
 </style>
