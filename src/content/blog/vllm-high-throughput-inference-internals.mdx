@@ -7,6 +7,8 @@ tags: ["vLLM","PagedAttention","FP8 KV Cache","Continuous Batching","Inference S
 featured: true
 ---
 
+import KvCache from '../../components/KvCache.astro';
+
 In modern generative AI infrastructure, deploying large language models efficiently is rarely about peak theoretical FLOPs. In production serving environments, the primary constraint is almost always **GPU memory bandwidth and dynamic VRAM allocation**.
 
 While running single-prompt inference using naive frameworks is trivial, building a high-concurrency serving system that sustains hundreds of requests per second under unpredictable prompt lengths requires moving deep into the runtime architecture [1].
@@ -71,6 +73,10 @@ Physical VRAM:  [Block 1 @ VRAM 0x4F] [Block 0 @ VRAM 0x1A] [Block 2 @ VRAM 0x8C
 Inspired by virtual memory paging in operating systems, **PagedAttention** [1] partitions each sequence's KV cache into fixed-size physical memory blocks (typically 16 or 32 tokens). Blocks do not need to be contiguous in physical memory; a block lookup table maps logical token positions to physical GPU memory addresses.
 
 This eliminates internal fragmentation, bringing memory waste down to less than 4% (only the tail of the final block).
+
+Here's what that looks like in motion. Each colour is one request. A request lands with a burst of blocks (its prefill), then grows one block at a time as it decodes, taking whichever block happens to be free. When it finishes, its blocks go straight back to the pool for the next request. Nothing has to be contiguous, so nothing is wasted.
+
+<KvCache caption="A simulated paged KV cache: 160 blocks shared by up to 8 concurrent requests." />
 
 ---
 

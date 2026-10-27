@@ -370,3 +370,8 @@
 .prose .data-footnote-backref {
   text-decoration: none;
 }
+
+/* Interactive figures embedded in MDX */
+.prose .kv {
+  margin-top: 2em !important;
+}

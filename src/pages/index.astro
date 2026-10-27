@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
-import KvCache from '../components/KvCache.astro';
+import AskStream from '../components/AskStream.astro';
 import { getPosts, formatDate, postUrl } from '../lib/posts';
 import { siteConfig } from '../data/siteConfig';
 import { caseStudies } from '../data/caseStudies';
@@ -62,11 +62,7 @@ const now = [
       </div>
     </div>
     <div class="hero-visual">
-      <KvCache />
-      <p class="visual-note">
-        What I think about all day: a paged KV cache. Requests grab free blocks wherever they are, grow token by token, and
-        hand memory back when they finish.
-      </p>
+      <AskStream />
     </div>
   </section>
 
@@ -242,13 +238,6 @@ const now = [
   .socials a:hover {
     color: var(--accent);
     background: var(--bg-soft);
-  }
-
-  .visual-note {
-    margin: 0.85rem 0.25rem 0;
-    font-size: 0.82rem;
-    line-height: 1.5;
-    color: var(--muted);
   }
 
   .numbers {

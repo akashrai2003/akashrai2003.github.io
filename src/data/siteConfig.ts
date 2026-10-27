@@ -16,5 +16,5 @@ export const siteConfig = {
    * Leave empty and readers are offered RSS + LinkedIn instead.
    */
   newsletterUrl: '',
-  resumeUrl: '/resume/Akash_Rai_Resume.pdf'
+  resumeUrl: 'https://drive.google.com/file/d/17cv445NWiBr_1XyQF-6qSJOUqUpoxZtB/view?usp=sharing'
 };

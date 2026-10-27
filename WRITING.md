@@ -88,6 +88,15 @@ use plain HTML (it works in `.md` too):
 
 **Highlight**: `<mark>important phrase</mark>`.
 
+**Interactive figures**: rename the post to `.mdx`, import a component under the frontmatter and drop
+it in anywhere. The vLLM post does this with the live KV-cache animation:
+
+```mdx
+import KvCache from '../../components/KvCache.astro';
+
+<KvCache caption="A simulated paged KV cache." />
+```
+
 ## 4. Making posts easy to read
 
 These matter more than any styling:

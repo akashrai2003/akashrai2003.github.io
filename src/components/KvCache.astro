@@ -1,4 +1,9 @@
 ---
+interface Props {
+  caption?: string;
+}
+const { caption } = Astro.props;
+
 // A tiny paged-KV-cache simulation: requests arrive, prefill a chunk of blocks,
 // decode one block at a time into whatever free block is available (pages are
 // non-contiguous), then finish and release their memory.
@@ -21,12 +26,13 @@ const used = initial.filter((v) => v >= 0).length;
   <div class="grid" style={`--cols:${COLS}`}>
     {initial.map((v) => <span class="b" data-s={v >= 0 ? v : undefined} />)}
   </div>
-  <figcaption class="kv-foot">
+  <div class="kv-foot">
     <span><b data-kv-seqs>6</b> seqs</span>
     <span><b data-kv-used>{used}</b>/{total} blocks</span>
     <span><b data-kv-util>{Math.round((used / total) * 100)}</b>% util</span>
-  </figcaption>
+  </div>
 </figure>
+{caption && <p class="kv-caption">{caption}</p>}
 
 <script>
   const root = document.querySelector<HTMLElement>('[data-kv]');
@@ -196,6 +202,15 @@ const used = initial.filter((v) => v >= 0).length;
     color: var(--text);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
+  }
+
+  .kv-caption {
+    margin: 0.75rem 0 0;
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--muted);
+    text-align: center;
   }
 
   @keyframes pop {

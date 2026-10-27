@@ -1,0 +1,332 @@
+---
+import { siteConfig } from '../data/siteConfig';
+
+// Pre-written answers, streamed token by token like a local model would.
+const qa = [
+  {
+    q: 'what do you work on?',
+    a: "I'm an AI engineer at Inferigence Quotient in Bengaluru. I build on-prem and air-gapped GenAI platforms: OCR and document intelligence, agentic assistants, and vLLM inference on local GPUs, including systems deployed for the Indian Navy."
+  },
+  {
+    q: "fastest thing you've tuned?",
+    a: 'Ministral-3-8B in FP8 on a 16 GB RTX 5060 Ti. An FP8 KV cache plus prompt-aware batching took context from 22K to 40K tokens while serving 10–20 requests at ~750 output tokens/s.'
+  },
+  {
+    q: 'what are you learning?',
+    a: "C++ and CUDA, from scratch. I want to understand what happens below vLLM's Python layer: kernels, memory hierarchies, and why one missing SM120 kernel can eat a whole day."
+  },
+  {
+    q: 'how do I reach you?',
+    a: `Email ${siteConfig.email} or find me on LinkedIn. I'm open to AI systems and inference engineering roles, remote or in Bengaluru.`
+  }
+];
+---
+
+<figure class="ask" data-ask aria-label="Ask Akash: pre-written answers streamed like a language model">
+  <div class="ask-head">
+    <span class="model"><span class="led" aria-hidden="true"></span><span>akash<span class="dim">.local</span></span></span>
+    <span class="state" data-ask-state>idle</span>
+  </div>
+
+  <div class="ask-body">
+    <p class="q"><span class="caret" aria-hidden="true">›</span> <span data-ask-q>{qa[0].q}</span></p>
+    <p class="a" data-ask-a>{qa[0].a}</p>
+  </div>
+
+  <div class="chips" role="group" aria-label="Ask a question">
+    {
+      qa.map((item, i) => (
+        <button type="button" class="chip" data-ask-i={i} aria-pressed={i === 0 ? 'true' : 'false'}>
+          {item.q}
+        </button>
+      ))
+    }
+  </div>
+
+  <div class="ask-foot">
+    <span>ttft <b data-ask-ttft>—</b></span>
+    <span><b data-ask-tps>—</b> tok/s</span>
+    <span><b data-ask-n>—</b> tokens</span>
+  </div>
+</figure>
+<p class="ask-note">Pre-written answers, streamed the way a model would generate them. Tap a question.</p>
+
+<script type="application/json" id="ask-data" set:html={JSON.stringify(qa)} />
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-ask]');
+  const raw = document.getElementById('ask-data')?.textContent;
+  if (root && raw) {
+    const qa: { q: string; a: string }[] = JSON.parse(raw);
+    const qEl = root.querySelector<HTMLElement>('[data-ask-q]')!;
+    const aEl = root.querySelector<HTMLElement>('[data-ask-a]')!;
+    const stateEl = root.querySelector<HTMLElement>('[data-ask-state]')!;
+    const ttftEl = root.querySelector<HTMLElement>('[data-ask-ttft]')!;
+    const tpsEl = root.querySelector<HTMLElement>('[data-ask-tps]')!;
+    const nEl = root.querySelector<HTMLElement>('[data-ask-n]')!;
+    const chips = [...root.querySelectorAll<HTMLButtonElement>('[data-ask-i]')];
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+    // Rough BPE-ish split: leading space stays attached, long words break into pieces.
+    const tokenize = (text: string) =>
+      (text.match(/\s?[A-Za-z]+|\s?\d+|\s?[^\sA-Za-z\d]|\s+/g) ?? []).flatMap((t) =>
+        t.length <= 6 ? [t] : (t.match(/[\s\S]{1,5}/g) ?? [t])
+      );
+
+    let run = 0; // bumps on every new question so stale streams stop
+    let auto = true;
+    let current = 0;
+    let visible = false;
+
+    const select = (i: number) => chips.forEach((c, k) => c.setAttribute('aria-pressed', String(k === i)));
+
+    async function ask(i: number) {
+      const id = ++run;
+      current = i;
+      select(i);
+      const { q, a } = qa[i];
+      const tokens = tokenize(a);
+      aEl.textContent = '';
+      ttftEl.textContent = tpsEl.textContent = nEl.textContent = '—';
+
+      if (reduce) {
+        qEl.textContent = q;
+        aEl.textContent = a;
+        nEl.textContent = String(tokens.length);
+        return;
+      }
+
+      // "Type" the prompt, then prefill, then decode.
+      qEl.textContent = '';
+      stateEl.textContent = 'prompt';
+      for (const ch of q) {
+        if (id !== run) return;
+        qEl.textContent += ch;
+        await sleep(28);
+      }
+      stateEl.textContent = 'prefill';
+      const t0 = performance.now();
+      await sleep(140 + Math.random() * 140);
+      if (id !== run) return;
+      ttftEl.textContent = `${Math.round(performance.now() - t0)} ms`;
+      stateEl.textContent = 'decoding';
+      aEl.classList.add('streaming');
+
+      const start = performance.now();
+      for (let k = 0; k < tokens.length; k++) {
+        if (id !== run) return;
+        const span = document.createElement('span');
+        span.className = `tok t${k % 4}`;
+        span.textContent = tokens[k];
+        aEl.appendChild(span);
+        nEl.textContent = String(k + 1);
+        const secs = (performance.now() - start) / 1000;
+        if (secs > 0.2) tpsEl.textContent = String(Math.round((k + 1) / secs));
+        await sleep(12 + Math.random() * 26);
+      }
+      aEl.classList.remove('streaming');
+      stateEl.textContent = 'done';
+
+      if (auto) {
+        await sleep(4200);
+        while (!visible || document.hidden) await sleep(500);
+        if (id === run && auto) ask((current + 1) % qa.length);
+      }
+    }
+
+    chips.forEach((c) =>
+      c.addEventListener('click', () => {
+        auto = false;
+        ask(Number(c.dataset.askI));
+      })
+    );
+
+    let started = false;
+    new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible && !started) {
+        started = true;
+        ask(0);
+      }
+    }).observe(root);
+  }
+</script>
+
+<style>
+  .ask {
+    margin: 0;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--bg-raised);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .ask-head,
+  .ask-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.1rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .ask-head {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .model {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .dim {
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .led {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  .state {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .ask-body {
+    padding: 1.1rem 1.1rem 0.5rem;
+    min-height: 13.5rem;
+  }
+
+  .q {
+    margin: 0 0 0.9rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--text-2);
+  }
+
+  .caret {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .a {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 1.12rem;
+    line-height: 1.6;
+    color: var(--text);
+  }
+
+  .a.streaming::after {
+    content: '';
+    display: inline-block;
+    width: 0.5em;
+    height: 1.05em;
+    margin-left: 2px;
+    vertical-align: -0.15em;
+    background: var(--accent);
+    animation: blink 0.9s steps(1) infinite;
+  }
+
+  .a :global(.tok) {
+    border-radius: 3px;
+    animation: settle 1.4s ease-out forwards;
+  }
+
+  .a :global(.t0) { --tint: rgb(249 115 22 / 0.28); }
+  .a :global(.t1) { --tint: rgb(20 184 166 / 0.28); }
+  .a :global(.t2) { --tint: rgb(99 102 241 / 0.28); }
+  .a :global(.t3) { --tint: rgb(245 158 11 / 0.3); }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.5rem 1.1rem 0.9rem;
+  }
+
+  .chip {
+    font: 0.75rem var(--font-mono);
+    padding: 0.4rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg-soft);
+    color: var(--text-2);
+    cursor: pointer;
+  }
+
+  .chip:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .chip[aria-pressed='true'] {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .ask-foot {
+    border-top: 1px solid var(--border);
+    background: var(--bg-soft);
+  }
+
+  .ask-foot b {
+    color: var(--text);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ask-note {
+    margin: 0.85rem 0.25rem 0;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  @keyframes settle {
+    from {
+      background: var(--tint);
+    }
+    to {
+      background: transparent;
+    }
+  }
+
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent);
+    }
+    70% {
+      box-shadow: 0 0 0 6px transparent;
+    }
+    100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .ask-body {
+      min-height: 15.5rem;
+    }
+  }
+</style>

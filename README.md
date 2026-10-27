@@ -21,6 +21,6 @@ Pushing to `main` deploys to GitHub Pages via `.github/workflows/deploy.yml`.
 | Experience, projects, case studies, skills | `src/data/*.ts` |
 | Pages | `src/pages/` |
 | Styles (colors, fonts) | `src/styles/global.css`, `src/styles/prose.css` |
-| Résumé PDF | `public/resume/Akash_Rai_Resume.pdf` |
+| Résumé link (Google Drive) | `resumeUrl` in `src/data/siteConfig.ts` |
 
 See **[WRITING.md](./WRITING.md)** for how to write and share posts.
