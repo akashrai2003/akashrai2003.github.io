@@ -11,7 +11,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
     })),
     {
       params: { slug: 'default' },
-      props: { title: 'Building practical AI systems, from retrieval to the GPU.', kicker: 'AI ENGINEER · BENGALURU' }
+      props: { title: 'Agents that do real work, and the local inference that runs them.', kicker: 'AI ENGINEER · BENGALURU' }
     }
   ];
 };

@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
-import AskStream from '../components/AskStream.astro';
+import AgentTrace from '../components/AgentTrace.astro';
 import { getPosts, formatDate, postUrl } from '../lib/posts';
 import { siteConfig } from '../data/siteConfig';
 import { caseStudies } from '../data/caseStudies';
@@ -10,22 +10,58 @@ const posts = await getPosts();
 const [lead, ...rest] = posts;
 const more = rest.slice(0, 4);
 
-const work = ['indian-navy-platform', 'salesforce-saql-analytics', 'inkwell-desktop-ide']
+const work = ['salesforce-saql-analytics', 'evidence-backed-memory', 'indian-navy-platform']
   .map((slug) => caseStudies.find((c) => c.slug === slug))
   .filter((c) => c !== undefined);
 
 const numbers = [
   { value: '22K→40K', label: 'context length', note: 'Ministral-3-8B FP8 on a 16 GB Blackwell card, via FP8 KV cache' },
-  { value: '~750', label: 'tokens / sec', note: 'aggregate output across batches of 10–20 requests' },
+  { value: '7-stage', label: 'multi-agent graph', note: 'LangGraph state machine for job-aligned assessment generation' },
   { value: '10×', label: 'cheaper RAG', note: 'replaced a managed RAG service with a custom retrieval cascade' },
   { value: '12K★', label: 'kepler.gl', note: 'merged PR #3262 fixing stale LLM state in the AI assistant' }
+];
+
+const pillars = [
+  {
+    label: 'Agentic systems',
+    title: 'Agents that plan, call tools and check their work',
+    href: '/projects/salesforce-saql-analytics/',
+    items: [
+      'Enterprise analytics assistant: intent routing, LLM-generated SAQL, validation, execution and fallbacks',
+      'Geospatial assistant: map layers, temporal playback and Vega-Lite charts from a conversation',
+      '7-stage LangGraph multi-agent pipeline for adaptive assessment generation',
+      'MCP servers exposing scoped tools for Inkwell and SocialGraph'
+    ]
+  },
+  {
+    label: 'Knowledge & documents',
+    title: 'Retrieval and memory you can audit',
+    href: '/projects/evidence-backed-memory/',
+    items: [
+      'Air-gapped document intelligence platform for the Indian Navy: OCR, analysis, generation, decision support',
+      'Long-term memory that extracts timelines and entities and revises facts when newer documents supersede them',
+      'Neo4j graph + vector retrieval with evidence-backed answers over long documents',
+      'Cascading dense retrieval + reranking that cut costs ~10× vs. managed RAG'
+    ]
+  },
+  {
+    label: 'Local inference',
+    title: 'Fast, private serving on your own GPUs',
+    href: '/blog/vllm-high-throughput-inference-internals/',
+    items: [
+      'Ministral-3-8B FP8 on a 16 GB Blackwell card: 22K → 40K context at ~750 tok/s aggregate',
+      'Gemma NVFP4 on SM120 by fixing CUDA 12.9, FlashInfer and CUTLASS build issues',
+      'CuPy-powered gRPC inference microservice without PyTorch bloat downstream',
+      'Domain-adaptive pre-training + LoRA on 4× L40S, benchmarked against base models'
+    ]
+  }
 ];
 
 const now = [
   {
     label: 'Shipping',
-    title: 'Air-gapped document intelligence',
-    body: 'On-prem LLM platform for defence: OCR, retrieval, agents and vLLM serving with zero internet access.'
+    title: 'Agents for decision support',
+    body: 'A geospatial assistant and a self-revising memory on top of an air-gapped document platform, running on local models.'
   },
   {
     label: 'Building',
@@ -45,11 +81,12 @@ const now = [
     <div class="hero-text">
       <p class="kicker kicker-accent">AI engineer · Bengaluru</p>
       <h1>
-        Hi, I'm Akash. I make LLMs run <em>fast</em>, <em>private</em> and useful, from retrieval down to the GPU.
+        Hi, I'm Akash. I build <em>agents</em> that do real work, and the <em>local inference</em> that runs them.
       </h1>
       <p class="lede">
-        I build on-prem and air-gapped GenAI systems at Inferigence Quotient: document intelligence, agentic workflows, and
-        vLLM inference tuned on Blackwell GPUs. This site is where I write up what I learn shipping them.
+        At Inferigence Quotient I ship on-prem and air-gapped GenAI: agents that route, call tools and check their own work,
+        document intelligence with long-term memory, and vLLM serving tuned on Blackwell GPUs. This site is where I write up
+        what I learn shipping them.
       </p>
       <div class="cta">
         <a class="btn btn-primary" href="/blog/">Read the writing <Icon name="arrowRight" /></a>
@@ -62,7 +99,7 @@ const now = [
       </div>
     </div>
     <div class="hero-visual">
-      <AskStream />
+      <AgentTrace />
     </div>
   </section>
 
@@ -76,6 +113,28 @@ const now = [
         </div>
       ))
     }
+  </section>
+
+  <section class="container-wide block">
+    <div class="block-head">
+      <h2>What I build</h2>
+      <a href="/experience/">Experience <Icon name="arrowRight" /></a>
+    </div>
+    <div class="pillars">
+      {
+        pillars.map((p) => (
+          <a class="pillar" href={p.href}>
+            <span class="kicker kicker-accent">{p.label}</span>
+            <span class="pillar-title">{p.title}</span>
+            <ul>
+              {p.items.map((it) => (
+                <li>{it}</li>
+              ))}
+            </ul>
+          </a>
+        ))
+      }
+    </div>
   </section>
 
   <section class="container-wide block">
@@ -310,6 +369,53 @@ const now = [
     white-space: nowrap;
   }
 
+  .pillars {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  .pillar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--bg-raised);
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+
+  .pillar:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .pillar-title {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+  }
+
+  .pillar ul {
+    margin: 0.25rem 0 0;
+    padding-left: 1.1rem;
+    font-size: 0.9rem;
+    color: var(--text-2);
+  }
+
+  .pillar li + li {
+    margin-top: 0.45rem;
+  }
+
+  .pillar li::marker {
+    color: var(--accent);
+  }
+
   .writing {
     display: grid;
     grid-template-columns: 1.1fr 1fr;
@@ -509,6 +615,7 @@ const now = [
       border-top: 1px solid var(--border);
     }
     .writing,
+    .pillars,
     .now,
     .work {
       grid-template-columns: 1fr;

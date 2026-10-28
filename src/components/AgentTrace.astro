@@ -1,0 +1,519 @@
+---
+// Replays agent runs modelled on systems I've built: routing, tool calls,
+// validation with retries, memory updates. Illustrative, not a live agent.
+
+type Node = { id: string; x: number; y: number; w: number; label: string; sub?: string };
+const H = 28;
+const nodes: Node[] = [
+  { id: 'query', x: 200, y: 22, w: 128, label: 'query' },
+  { id: 'planner', x: 200, y: 82, w: 150, label: 'LLM planner', sub: 'routes · repairs' },
+  { id: 'sql', x: 66, y: 150, w: 82, label: 'SQL / SAQL' },
+  { id: 'retrieve', x: 155, y: 150, w: 82, label: 'graph+vector' },
+  { id: 'geo', x: 245, y: 150, w: 82, label: 'map + chart' },
+  { id: 'ocr', x: 334, y: 150, w: 82, label: 'OCR+memory' },
+  { id: 'validate', x: 138, y: 214, w: 112, label: 'validate' },
+  { id: 'answer', x: 282, y: 214, w: 112, label: 'answer' }
+];
+const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
+const h = (n: Node) => (n.sub ? 36 : H);
+const bottom = (n: Node) => n.y + h(n) / 2;
+const top = (n: Node) => n.y - h(n) / 2;
+const curve = (a: Node, b: Node) => {
+  const y1 = bottom(a);
+  const y2 = top(b);
+  const ym = (y1 + y2) / 2;
+  return `M${a.x} ${y1} C${a.x} ${ym} ${b.x} ${ym} ${b.x} ${y2}`;
+};
+
+const tools = ['sql', 'retrieve', 'geo', 'ocr'];
+const edges: Record<string, string> = {
+  'query>planner': curve(byId.query, byId.planner),
+  ...Object.fromEntries(tools.map((t) => [`planner>${t}`, curve(byId.planner, byId[t])])),
+  ...Object.fromEntries(tools.map((t) => [`${t}>validate`, curve(byId[t], byId.validate)])),
+  'validate>answer': `M${byId.validate.x + 56} 214 L${byId.answer.x - 56} 214`,
+  'validate>planner': `M${byId.validate.x - 56} 214 H13 Q7 214 7 208 V88 Q7 82 13 82 H${byId.planner.x - 75}`
+};
+
+type Step = [node: string, log: string];
+const scenarios: { tag: string; query: string; steps: Step[] }[] = [
+  {
+    tag: 'analytics',
+    query: 'Which region grew fastest last quarter?',
+    steps: [
+      ['query', 'question received'],
+      ['planner', 'intent: metric question → analytics tool, not RAG'],
+      ['sql', 'generate SAQL from the dataset schema'],
+      ['validate', "✗ unknown field 'region' → send back"],
+      ['planner', 'repair the query with a schema hint'],
+      ['sql', 'regenerate SAQL and execute'],
+      ['validate', '✓ fields, types and filters check out'],
+      ['answer', 'exact numbers from the system of record']
+    ]
+  },
+  {
+    tag: 'geospatial',
+    query: "Show last week's activity on the map, then chart it",
+    steps: [
+      ['query', 'question received'],
+      ['planner', 'intent: geospatial + time window'],
+      ['geo', 'filter events to the last 7 days · MBTiles layer'],
+      ['geo', 'build a Vega-Lite spec for daily counts'],
+      ['validate', '✓ spec compiles · playback ready'],
+      ['answer', 'map playback + chart, in the conversation']
+    ]
+  },
+  {
+    tag: 'memory',
+    query: 'What changed in the newest report?',
+    steps: [
+      ['query', 'scanned report arrives'],
+      ['planner', 'intent: ingest + compare with memory'],
+      ['ocr', 'OCR pages → text with layout'],
+      ['ocr', 'extract timeline events and entities'],
+      ['validate', 'diff against stored facts: 1 superseded'],
+      ['answer', 'what changed, with evidence for old and new']
+    ]
+  },
+  {
+    tag: 'grounded QA',
+    query: 'Which documents support the churn forecast?',
+    steps: [
+      ['query', 'question received'],
+      ['planner', 'intent: grounded question over long docs'],
+      ['retrieve', 'Neo4j hops + vector search'],
+      ['validate', '✓ every claim maps to a source passage'],
+      ['answer', 'answer with cited passages']
+    ]
+  }
+];
+---
+
+<figure class="trace" data-trace aria-label="Animated replay of an AI agent routing a question through tools, validation and retries">
+  <div class="trace-head">
+    <span class="title"><span class="led" aria-hidden="true"></span><span>agent<span class="dim">.run</span></span></span>
+    <span class="tabs" role="group" aria-label="Choose a scenario">
+      {
+        scenarios.map((s, i) => (
+          <button type="button" class="tab" data-scenario={i} aria-pressed={i === 0 ? 'true' : 'false'}>
+            {s.tag}
+          </button>
+        ))
+      }
+    </span>
+  </div>
+
+  <p class="query"><span class="caret" aria-hidden="true">›</span> <span data-trace-query>{scenarios[0].query}</span></p>
+
+  <svg class="graph" viewBox="0 0 380 236" role="img" aria-label="Agent graph: query, planner, four tools, validate, answer">
+    {
+      Object.entries(edges).map(([id, d]) => (
+        <path class:list={['edge', { retry: id === 'validate>planner' }]} data-edge={id} d={d} />
+      ))
+    }
+    {
+      nodes.map((n) => (
+        <g class="node" data-node={n.id}>
+          <rect x={n.x - n.w / 2} y={n.y - h(n) / 2} width={n.w} height={h(n)} rx="7" />
+          <text x={n.x} y={n.sub ? n.y - 3 : n.y + 3.5} class="label">
+            {n.label}
+          </text>
+          {n.sub && (
+            <text x={n.x} y={n.y + 10} class="sub">
+              {n.sub}
+            </text>
+          )}
+        </g>
+      ))
+    }
+    <text x="16" y="150" class="retry-label">retry</text>
+    <circle class="dot" r="4" cx="-10" cy="-10" data-dot></circle>
+  </svg>
+
+  <ol class="log" data-trace-log aria-live="off">
+    {scenarios[0].steps.slice(-3).map(([, log]) => <li>{log}</li>)}
+  </ol>
+
+  <div class="trace-foot">
+    <span><b data-trace-steps>—</b> steps</span>
+    <span><b data-trace-tools>—</b> tool calls</span>
+    <span><b data-trace-retries>—</b> retries</span>
+  </div>
+</figure>
+<p class="trace-note">
+  Replays of agent patterns I've built: intent routing, tool calls, validation with retries, and memory that revises itself.
+</p>
+
+<script type="application/json" id="trace-data" set:html={JSON.stringify(scenarios)} />
+
+<script>
+  type Step = [string, string];
+  const root = document.querySelector<HTMLElement>('[data-trace]');
+  const raw = document.getElementById('trace-data')?.textContent;
+  if (root && raw) {
+    const scenarios: { tag: string; query: string; steps: Step[] }[] = JSON.parse(raw);
+    const svg = root.querySelector('svg')!;
+    const dot = root.querySelector<SVGCircleElement>('[data-dot]')!;
+    const queryEl = root.querySelector<HTMLElement>('[data-trace-query]')!;
+    const logEl = root.querySelector<HTMLElement>('[data-trace-log]')!;
+    const stepsEl = root.querySelector<HTMLElement>('[data-trace-steps]')!;
+    const toolsEl = root.querySelector<HTMLElement>('[data-trace-tools]')!;
+    const retriesEl = root.querySelector<HTMLElement>('[data-trace-retries]')!;
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-scenario]')];
+    const node = (id: string) => svg.querySelector<SVGGElement>(`[data-node="${id}"]`)!;
+    const edge = (a: string, b: string) => svg.querySelector<SVGPathElement>(`[data-edge="${a}>${b}"]`);
+    const TOOLS = new Set(['sql', 'retrieve', 'geo', 'ocr']);
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+    let run = 0;
+    let auto = true;
+    let current = 0;
+    let visible = false;
+
+    const travel = (path: SVGPathElement, ms: number, id: number) =>
+      new Promise<void>((resolve) => {
+        const len = path.getTotalLength();
+        const t0 = performance.now();
+        const frame = (now: number) => {
+          if (id !== run) return resolve();
+          const t = Math.min(1, (now - t0) / ms);
+          const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+          const p = path.getPointAtLength(e * len);
+          dot.setAttribute('cx', String(p.x));
+          dot.setAttribute('cy', String(p.y));
+          if (t < 1) requestAnimationFrame(frame);
+          else resolve();
+        };
+        requestAnimationFrame(frame);
+      });
+
+    const reset = () => {
+      svg.querySelectorAll('.node').forEach((n) => n.classList.remove('active', 'visited'));
+      svg.querySelectorAll('.edge').forEach((e) => e.classList.remove('lit'));
+      dot.setAttribute('cx', '-10');
+      dot.setAttribute('cy', '-10');
+      logEl.innerHTML = '';
+    };
+
+    const log = (text: string, t: number) => {
+      const li = document.createElement('li');
+      li.innerHTML = `<span class="t">${(t / 1000).toFixed(2)}s</span>`;
+      li.append(document.createTextNode(text));
+      if (text.startsWith('✗')) li.classList.add('bad');
+      if (text.startsWith('✓')) li.classList.add('good');
+      logEl.appendChild(li);
+      while (logEl.children.length > 4) logEl.firstElementChild!.remove();
+    };
+
+    const counts = (steps: Step[], upto: number) => {
+      const s = steps.slice(0, upto + 1);
+      stepsEl.textContent = String(s.length);
+      toolsEl.textContent = String(s.filter(([n]) => TOOLS.has(n)).length);
+      retriesEl.textContent = String(s.filter(([, l]) => l.startsWith('✗')).length);
+    };
+
+    async function play(i: number) {
+      const id = ++run;
+      current = i;
+      tabs.forEach((t, k) => t.setAttribute('aria-pressed', String(k === i)));
+      const { query, steps } = scenarios[i];
+      queryEl.textContent = query;
+      reset();
+
+      if (reduce) {
+        steps.forEach(([n, l], k) => {
+          node(n).classList.add('visited');
+          if (k > 0) edge(steps[k - 1][0], n)?.classList.add('lit');
+          log(l, k * 400);
+        });
+        node(steps[steps.length - 1][0]).classList.add('active');
+        counts(steps, steps.length - 1);
+        return;
+      }
+
+      let clock = 0;
+      for (let k = 0; k < steps.length; k++) {
+        if (id !== run) return;
+        const [n, text] = steps[k];
+        const prev = k > 0 ? steps[k - 1][0] : null;
+        const path = prev && prev !== n ? edge(prev, n) : null;
+        if (path) {
+          path.classList.add('lit');
+          await travel(path, 520, id);
+          clock += 180 + Math.round(Math.random() * 260);
+        } else if (prev) {
+          await sleep(380);
+          clock += 400 + Math.round(Math.random() * 500);
+        }
+        if (id !== run) return;
+        svg.querySelectorAll('.node.active').forEach((el) => el.classList.replace('active', 'visited'));
+        node(n).classList.add('active');
+        log(text, clock);
+        counts(steps, k);
+        await sleep(text.startsWith('✗') ? 900 : 520);
+      }
+
+      if (!auto) return;
+      await sleep(2600);
+      while (!visible || document.hidden) await sleep(500);
+      if (id === run && auto) play((current + 1) % scenarios.length);
+    }
+
+    tabs.forEach((t) =>
+      t.addEventListener('click', () => {
+        auto = false;
+        play(Number(t.dataset.scenario));
+      })
+    );
+
+    let started = false;
+    new IntersectionObserver(([e]) => {
+      visible = e.isIntersecting;
+      if (visible && !started) {
+        started = true;
+        play(0);
+      }
+    }).observe(root);
+  }
+</script>
+
+<style>
+  .trace {
+    margin: 0;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--bg-raised);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .trace-head,
+  .trace-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 1rem;
+  }
+
+  .trace-head {
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .dim {
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .led {
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  .tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  .tab {
+    font: inherit;
+    font-size: 0.68rem;
+    padding: 0.28rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+  }
+
+  .tab:hover {
+    color: var(--text);
+  }
+
+  .tab[aria-pressed='true'] {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .query {
+    margin: 0;
+    padding: 0.85rem 1rem 0.25rem;
+    font-size: 0.82rem;
+    color: var(--text);
+  }
+
+  .caret {
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .graph {
+    display: block;
+    width: 100%;
+    height: auto;
+    padding: 0.25rem 0.5rem 0;
+    overflow: visible;
+  }
+
+  .edge {
+    fill: none;
+    stroke: var(--border-strong);
+    stroke-width: 1.2;
+    transition: stroke 0.3s, opacity 0.3s;
+  }
+
+  .edge.retry {
+    stroke-dasharray: 3 3;
+  }
+
+  .edge.lit {
+    stroke: var(--accent);
+    stroke-width: 1.6;
+  }
+
+  .retry-label {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    fill: var(--muted);
+    transform-box: fill-box;
+    transform-origin: center;
+    transform: rotate(-90deg);
+    text-anchor: middle;
+  }
+
+  .node rect {
+    fill: var(--bg-soft);
+    stroke: var(--border-strong);
+    stroke-width: 1;
+    transition: fill 0.3s, stroke 0.3s;
+  }
+
+  .node text {
+    font-family: var(--font-mono);
+    text-anchor: middle;
+    fill: var(--text-2);
+    transition: fill 0.3s;
+  }
+
+  .label {
+    font-size: 10.5px;
+    font-weight: 500;
+  }
+
+  .sub {
+    font-size: 8px;
+    fill: var(--muted) !important;
+  }
+
+  .node.visited rect {
+    stroke: color-mix(in srgb, var(--accent) 55%, var(--border-strong));
+  }
+
+  .node.active rect {
+    fill: var(--accent-soft);
+    stroke: var(--accent);
+    stroke-width: 1.6;
+  }
+
+  .node.active .label {
+    fill: var(--accent);
+  }
+
+  .dot {
+    fill: var(--accent);
+    filter: drop-shadow(0 0 4px var(--accent));
+  }
+
+  .log {
+    list-style: none;
+    margin: 0;
+    padding: 0.4rem 1rem 0.8rem;
+    min-height: 6.2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 0.2rem;
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: var(--text-2);
+  }
+
+  .log :global(li) {
+    animation: in 0.3s ease-out;
+  }
+
+  .log :global(.t) {
+    display: inline-block;
+    width: 3.6rem;
+    color: var(--muted);
+  }
+
+  .log :global(.bad) {
+    color: var(--callout-caution);
+  }
+
+  .log :global(.good) {
+    color: var(--callout-tip);
+  }
+
+  .trace-foot {
+    border-top: 1px solid var(--border);
+    background: var(--bg-soft);
+  }
+
+  .trace-foot b {
+    color: var(--text);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .trace-note {
+    margin: 0.85rem 0.25rem 0;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  @keyframes in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent);
+    }
+    70% {
+      box-shadow: 0 0 0 6px transparent;
+    }
+    100% {
+      box-shadow: 0 0 0 0 transparent;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .led,
+    .log :global(li) {
+      animation: none;
+    }
+  }
+</style>

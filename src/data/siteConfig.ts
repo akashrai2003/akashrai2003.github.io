@@ -3,8 +3,8 @@ export const siteConfig = {
   title: 'Akash Rai — AI Engineer',
   role: 'AI Engineer',
   description:
-    'AI engineer building local-first and enterprise GenAI systems: vLLM inference on Blackwell GPUs, air-gapped document intelligence, and agentic workflows. Writing about what I learn along the way.',
-  tagline: 'Building practical AI systems, from retrieval to the GPU, and writing down what I learn.',
+    'AI engineer building agentic systems, document intelligence with long-term memory, and local LLM inference on Blackwell GPUs. Writing about what I learn shipping them.',
+  tagline: 'Agents that do real work, and the local inference that runs them.',
   location: 'Bengaluru, India',
   email: 'akashtooop@gmail.com',
   github: 'https://github.com/akashrai2003',
