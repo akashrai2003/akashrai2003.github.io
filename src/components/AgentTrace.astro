@@ -1,100 +1,186 @@
 ---
-// Replays agent runs modelled on systems I've built: routing, tool calls,
-// validation with retries, memory updates. Illustrative, not a live agent.
+// One diagram per system I've built. Each replays a typical run along that
+// system's own flow. Simplified for the page; not a live agent.
 
-type Node = { id: string; x: number; y: number; w: number; label: string; sub?: string };
-const H = 28;
-const nodes: Node[] = [
-  { id: 'query', x: 200, y: 22, w: 128, label: 'query' },
-  { id: 'planner', x: 200, y: 82, w: 150, label: 'LLM planner', sub: 'routes · repairs' },
-  { id: 'sql', x: 66, y: 150, w: 82, label: 'SQL / SAQL' },
-  { id: 'retrieve', x: 155, y: 150, w: 82, label: 'graph+vector' },
-  { id: 'geo', x: 245, y: 150, w: 82, label: 'map + chart' },
-  { id: 'ocr', x: 334, y: 150, w: 82, label: 'OCR+memory' },
-  { id: 'validate', x: 138, y: 214, w: 112, label: 'validate' },
-  { id: 'answer', x: 282, y: 214, w: 112, label: 'answer' }
-];
-const byId = Object.fromEntries(nodes.map((n) => [n.id, n]));
-const h = (n: Node) => (n.sub ? 36 : H);
-const bottom = (n: Node) => n.y + h(n) / 2;
-const top = (n: Node) => n.y - h(n) / 2;
-const curve = (a: Node, b: Node) => {
-  const y1 = bottom(a);
-  const y2 = top(b);
-  const ym = (y1 + y2) / 2;
-  return `M${a.x} ${y1} C${a.x} ${ym} ${b.x} ${ym} ${b.x} ${y2}`;
-};
+type N = { id: string; x: number; y: number; w: number; label: string; sub?: string };
+type E = { from: string; to: string; kind?: 'arc' | 'dashed'; label?: string };
+type Step = [node: string, log: string, from?: string];
+type System = { tag: string; name: string; where: string; prompt: string; nodes: N[]; edges: E[]; steps: Step[] };
 
-const tools = ['sql', 'retrieve', 'geo', 'ocr'];
-const edges: Record<string, string> = {
-  'query>planner': curve(byId.query, byId.planner),
-  ...Object.fromEntries(tools.map((t) => [`planner>${t}`, curve(byId.planner, byId[t])])),
-  ...Object.fromEntries(tools.map((t) => [`${t}>validate`, curve(byId[t], byId.validate)])),
-  'validate>answer': `M${byId.validate.x + 56} 214 L${byId.answer.x - 56} 214`,
-  'validate>planner': `M${byId.validate.x - 56} 214 H13 Q7 214 7 208 V88 Q7 82 13 82 H${byId.planner.x - 75}`
-};
-
-type Step = [node: string, log: string];
-const scenarios: { tag: string; query: string; steps: Step[] }[] = [
+const systems: System[] = [
   {
     tag: 'analytics',
-    query: 'Which region grew fastest last quarter?',
+    name: 'Enterprise analytics assistant',
+    where: 'Consulting · Salesforce Einstein Analytics',
+    prompt: 'Which region grew fastest last quarter?',
+    nodes: [
+      { id: 'q', x: 190, y: 22, w: 120, label: 'question' },
+      { id: 'router', x: 190, y: 76, w: 150, label: 'router', sub: 'numbers vs. text' },
+      { id: 'saql', x: 70, y: 152, w: 100, label: 'SAQL writer', sub: 'LLM' },
+      { id: 'validate', x: 190, y: 152, w: 100, label: 'validate', sub: 'schema + types' },
+      { id: 'docs', x: 310, y: 152, w: 100, label: 'doc search', sub: 'text questions' },
+      { id: 'exec', x: 70, y: 214, w: 100, label: 'execute', sub: 'Einstein Analytics' },
+      { id: 'format', x: 190, y: 214, w: 100, label: 'format' },
+      { id: 'answer', x: 310, y: 214, w: 100, label: 'answer' }
+    ],
+    edges: [
+      { from: 'q', to: 'router' },
+      { from: 'router', to: 'saql' },
+      { from: 'router', to: 'docs' },
+      { from: 'saql', to: 'validate' },
+      { from: 'validate', to: 'saql', kind: 'arc', label: 'retry' },
+      { from: 'validate', to: 'exec' },
+      { from: 'exec', to: 'format' },
+      { from: 'format', to: 'answer' },
+      { from: 'docs', to: 'answer' }
+    ],
     steps: [
-      ['query', 'question received'],
-      ['planner', 'intent: metric question → analytics tool, not RAG'],
-      ['sql', 'generate SAQL from the dataset schema'],
-      ['validate', "✗ unknown field 'region' → send back"],
-      ['planner', 'repair the query with a schema hint'],
-      ['sql', 'regenerate SAQL and execute'],
-      ['validate', '✓ fields, types and filters check out'],
-      ['answer', 'exact numbers from the system of record']
+      ['q', 'question received'],
+      ['router', 'metric question → SAQL path, not RAG'],
+      ['saql', 'write SAQL from the dataset schema'],
+      ['validate', "✗ unknown field 'region' → back to the writer"],
+      ['saql', 'rewrite using the schema hint'],
+      ['validate', '✓ fields, types and filters valid'],
+      ['exec', 'run the query in Einstein Analytics'],
+      ['format', 'shape rows into a readable answer'],
+      ['answer', 'exact numbers, straight from the source']
     ]
   },
   {
     tag: 'geospatial',
-    query: "Show last week's activity on the map, then chart it",
+    name: 'Geospatial assistant',
+    where: 'Inferigence Quotient · on-prem',
+    prompt: "Show last week's activity on the map, then chart it",
+    nodes: [
+      { id: 'q', x: 190, y: 22, w: 120, label: 'question' },
+      { id: 'agent', x: 190, y: 76, w: 150, label: 'LLM agent', sub: 'plans tool calls' },
+      { id: 'time', x: 70, y: 152, w: 100, label: 'time window', sub: 'temporal reasoning' },
+      { id: 'map', x: 190, y: 152, w: 100, label: 'map layer', sub: 'MBTiles' },
+      { id: 'chart', x: 310, y: 152, w: 100, label: 'chart spec', sub: 'Vega-Lite' },
+      { id: 'view', x: 190, y: 214, w: 190, label: 'map playback + chart' }
+    ],
+    edges: [
+      { from: 'q', to: 'agent' },
+      { from: 'agent', to: 'time' },
+      { from: 'time', to: 'map' },
+      { from: 'map', to: 'chart' },
+      { from: 'map', to: 'view' },
+      { from: 'chart', to: 'view' }
+    ],
     steps: [
-      ['query', 'question received'],
-      ['planner', 'intent: geospatial + time window'],
-      ['geo', 'filter events to the last 7 days · MBTiles layer'],
-      ['geo', 'build a Vega-Lite spec for daily counts'],
-      ['validate', '✓ spec compiles · playback ready'],
-      ['answer', 'map playback + chart, in the conversation']
+      ['q', 'question received'],
+      ['agent', 'plan: time filter → map → chart'],
+      ['time', '"last week" → concrete date range'],
+      ['map', 'filter events, render the MBTiles layer'],
+      ['chart', 'aggregate per day → Vega-Lite spec'],
+      ['view', 'timeline playback + chart, in the chat']
     ]
   },
   {
     tag: 'memory',
-    query: 'What changed in the newest report?',
+    name: 'Self-revising memory',
+    where: 'Inferigence Quotient · air-gapped',
+    prompt: 'A newer report arrives for an event already on file',
+    nodes: [
+      { id: 'doc', x: 190, y: 22, w: 130, label: 'scanned report' },
+      { id: 'ocr', x: 190, y: 76, w: 150, label: 'OCR', sub: 'text + page layout' },
+      { id: 'extract', x: 70, y: 152, w: 100, label: 'extract', sub: 'timeline · entities' },
+      { id: 'compare', x: 190, y: 152, w: 100, label: 'compare', sub: 'vs. stored facts' },
+      { id: 'memory', x: 310, y: 152, w: 100, label: 'memory', sub: 'facts + evidence' },
+      { id: 'revise', x: 190, y: 214, w: 150, label: 'revise', sub: 'supersede, keep evidence' }
+    ],
+    edges: [
+      { from: 'doc', to: 'ocr' },
+      { from: 'ocr', to: 'extract' },
+      { from: 'extract', to: 'compare' },
+      { from: 'memory', to: 'compare', kind: 'dashed' },
+      { from: 'compare', to: 'revise' },
+      { from: 'revise', to: 'memory' }
+    ],
     steps: [
-      ['query', 'scanned report arrives'],
-      ['planner', 'intent: ingest + compare with memory'],
-      ['ocr', 'OCR pages → text with layout'],
-      ['ocr', 'extract timeline events and entities'],
-      ['validate', 'diff against stored facts: 1 superseded'],
-      ['answer', 'what changed, with evidence for old and new']
+      ['doc', 'new scanned report arrives'],
+      ['ocr', 'OCR → text with page layout'],
+      ['extract', 'pull timeline events and entities'],
+      ['compare', 'look up stored facts for those entities'],
+      ['compare', '✗ conflict: newer date for the same event'],
+      ['revise', 'supersede the old fact, keep both sources'],
+      ['memory', '✓ memory updated, history preserved']
     ]
   },
   {
-    tag: 'grounded QA',
-    query: 'Which documents support the churn forecast?',
+    tag: 'graph RAG',
+    name: 'Graph + vector knowledge base',
+    where: 'Consulting · Neo4j',
+    prompt: 'Which documents support the churn forecast?',
+    nodes: [
+      { id: 'q', x: 190, y: 22, w: 120, label: 'question' },
+      { id: 'embed', x: 190, y: 76, w: 150, label: 'embed query' },
+      { id: 'vector', x: 70, y: 152, w: 110, label: 'vector search', sub: 'long documents' },
+      { id: 'graph', x: 210, y: 152, w: 110, label: 'graph hops', sub: 'Neo4j' },
+      { id: 'merge', x: 70, y: 214, w: 100, label: 'merge context' },
+      { id: 'llm', x: 190, y: 214, w: 100, label: 'LLM answer' },
+      { id: 'check', x: 310, y: 214, w: 100, label: 'cite check' }
+    ],
+    edges: [
+      { from: 'q', to: 'embed' },
+      { from: 'embed', to: 'vector' },
+      { from: 'embed', to: 'graph' },
+      { from: 'vector', to: 'merge' },
+      { from: 'graph', to: 'merge' },
+      { from: 'merge', to: 'llm' },
+      { from: 'llm', to: 'check' }
+    ],
     steps: [
-      ['query', 'question received'],
-      ['planner', 'intent: grounded question over long docs'],
-      ['retrieve', 'Neo4j hops + vector search'],
-      ['validate', '✓ every claim maps to a source passage'],
-      ['answer', 'answer with cited passages']
+      ['q', 'question received'],
+      ['embed', 'embed the question'],
+      ['vector', 'top-k passages across long docs'],
+      ['graph', 'walk linked entities in Neo4j', 'embed'],
+      ['merge', 'combine and dedupe evidence'],
+      ['llm', 'draft an answer from the evidence'],
+      ['check', '✓ every claim cites a passage']
     ]
   }
 ];
+
+const height = (n: N) => (n.sub ? 36 : 28);
+const geom = (s: System, e: E) => {
+  const a = s.nodes.find((n) => n.id === e.from)!;
+  const b = s.nodes.find((n) => n.id === e.to)!;
+  const at = a.y - height(a) / 2;
+  const bt = b.y - height(b) / 2;
+  if (e.kind === 'arc') {
+    const lift = 24;
+    return {
+      d: `M${a.x} ${at} C${a.x} ${at - lift} ${b.x} ${bt - lift} ${b.x} ${bt}`,
+      lx: (a.x + b.x) / 2,
+      ly: Math.min(at, bt) - lift * 0.75 - 3
+    };
+  }
+  if (Math.abs(a.y - b.y) < 4) {
+    const [x1, x2] = b.x > a.x ? [a.x + a.w / 2, b.x - b.w / 2] : [a.x - a.w / 2, b.x + b.w / 2];
+    return { d: `M${x1} ${a.y} L${x2} ${b.y}` };
+  }
+  if (b.y > a.y) {
+    const y1 = a.y + height(a) / 2;
+    const ym = (y1 + bt) / 2;
+    return { d: `M${a.x} ${y1} C${a.x} ${ym} ${b.x} ${ym} ${b.x} ${bt}` };
+  }
+  // Upward elbow: leave from the side facing b, rise into b's bottom.
+  const x1 = b.x > a.x ? a.x + a.w / 2 : a.x - a.w / 2;
+  const y2 = b.y + height(b) / 2;
+  return { d: `M${x1} ${a.y} C${b.x} ${a.y} ${b.x} ${a.y} ${b.x} ${y2}` };
+};
+
+const clientData = systems.map((s) => ({ prompt: s.prompt, steps: s.steps }));
 ---
 
-<figure class="trace" data-trace aria-label="Animated replay of an AI agent routing a question through tools, validation and retries">
+<figure class="trace" data-trace aria-label="Animated diagrams of AI systems Akash has built">
   <div class="trace-head">
-    <span class="title"><span class="led" aria-hidden="true"></span><span>agent<span class="dim">.run</span></span></span>
-    <span class="tabs" role="group" aria-label="Choose a scenario">
+    <span class="title"><span class="led" aria-hidden="true"></span><span>systems<span class="dim">.replay</span></span></span>
+    <span class="tabs" role="group" aria-label="Choose a system">
       {
-        scenarios.map((s, i) => (
-          <button type="button" class="tab" data-scenario={i} aria-pressed={i === 0 ? 'true' : 'false'}>
+        systems.map((s, i) => (
+          <button type="button" class="tab" data-system={i} aria-pressed={i === 0 ? 'true' : 'false'}>
             {s.tag}
           </button>
         ))
@@ -102,66 +188,75 @@ const scenarios: { tag: string; query: string; steps: Step[] }[] = [
     </span>
   </div>
 
-  <p class="query"><span class="caret" aria-hidden="true">›</span> <span data-trace-query>{scenarios[0].query}</span></p>
+  {
+    systems.map((s, i) => (
+      <div class="panel" data-panel={i} hidden={i !== 0}>
+        <p class="system">
+          <strong>{s.name}</strong>
+          <span>{s.where}</span>
+        </p>
+        <p class="query">
+          <span class="caret" aria-hidden="true">›</span> {s.prompt}
+        </p>
+        <svg class="graph" viewBox="0 0 380 236" role="img" aria-label={`${s.name} flow`}>
+          {s.edges.map((e) => {
+            const g = geom(s, e);
+            return (
+              <>
+                <path class:list={['edge', { dashed: e.kind }]} data-edge={`${e.from}>${e.to}`} d={g.d} />
+                {e.label && g.lx !== undefined && (
+                  <text class="edge-label" x={g.lx} y={g.ly}>
+                    {e.label}
+                  </text>
+                )}
+              </>
+            );
+          })}
+          {s.nodes.map((n) => (
+            <g class="node" data-node={n.id}>
+              <rect x={n.x - n.w / 2} y={n.y - height(n) / 2} width={n.w} height={height(n)} rx="7" />
+              <text x={n.x} y={n.sub ? n.y - 3 : n.y + 3.5} class="label">
+                {n.label}
+              </text>
+              {n.sub && (
+                <text x={n.x} y={n.y + 10} class="sub">
+                  {n.sub}
+                </text>
+              )}
+            </g>
+          ))}
+          <circle class="dot" r="4" cx="-10" cy="-10" />
+        </svg>
+      </div>
+    ))
+  }
 
-  <svg class="graph" viewBox="0 0 380 236" role="img" aria-label="Agent graph: query, planner, four tools, validate, answer">
-    {
-      Object.entries(edges).map(([id, d]) => (
-        <path class:list={['edge', { retry: id === 'validate>planner' }]} data-edge={id} d={d} />
-      ))
-    }
-    {
-      nodes.map((n) => (
-        <g class="node" data-node={n.id}>
-          <rect x={n.x - n.w / 2} y={n.y - h(n) / 2} width={n.w} height={h(n)} rx="7" />
-          <text x={n.x} y={n.sub ? n.y - 3 : n.y + 3.5} class="label">
-            {n.label}
-          </text>
-          {n.sub && (
-            <text x={n.x} y={n.y + 10} class="sub">
-              {n.sub}
-            </text>
-          )}
-        </g>
-      ))
-    }
-    <text x="16" y="150" class="retry-label">retry</text>
-    <circle class="dot" r="4" cx="-10" cy="-10" data-dot></circle>
-  </svg>
-
-  <ol class="log" data-trace-log aria-live="off">
-    {scenarios[0].steps.slice(-3).map(([, log]) => <li>{log}</li>)}
-  </ol>
+  <ol class="log" data-trace-log aria-live="off"></ol>
 
   <div class="trace-foot">
     <span><b data-trace-steps>—</b> steps</span>
-    <span><b data-trace-tools>—</b> tool calls</span>
-    <span><b data-trace-retries>—</b> retries</span>
+    <span><b data-trace-retries>—</b> corrections</span>
+    <span><b data-trace-time>—</b> elapsed</span>
   </div>
 </figure>
 <p class="trace-note">
-  Replays of agent patterns I've built: intent routing, tool calls, validation with retries, and memory that revises itself.
+  Four separate systems I've built, each replaying a typical run through its own pipeline. Simplified for the page.
 </p>
 
-<script type="application/json" id="trace-data" set:html={JSON.stringify(scenarios)} />
+<script type="application/json" id="trace-data" set:html={JSON.stringify(clientData)} />
 
 <script>
-  type Step = [string, string];
+  type Step = [string, string, string?];
   const root = document.querySelector<HTMLElement>('[data-trace]');
   const raw = document.getElementById('trace-data')?.textContent;
   if (root && raw) {
-    const scenarios: { tag: string; query: string; steps: Step[] }[] = JSON.parse(raw);
-    const svg = root.querySelector('svg')!;
-    const dot = root.querySelector<SVGCircleElement>('[data-dot]')!;
-    const queryEl = root.querySelector<HTMLElement>('[data-trace-query]')!;
+    const systems: { prompt: string; steps: Step[] }[] = JSON.parse(raw);
+    const panels = [...root.querySelectorAll<HTMLElement>('[data-panel]')];
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-system]')];
     const logEl = root.querySelector<HTMLElement>('[data-trace-log]')!;
     const stepsEl = root.querySelector<HTMLElement>('[data-trace-steps]')!;
-    const toolsEl = root.querySelector<HTMLElement>('[data-trace-tools]')!;
     const retriesEl = root.querySelector<HTMLElement>('[data-trace-retries]')!;
-    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[data-scenario]')];
-    const node = (id: string) => svg.querySelector<SVGGElement>(`[data-node="${id}"]`)!;
-    const edge = (a: string, b: string) => svg.querySelector<SVGPathElement>(`[data-edge="${a}>${b}"]`);
-    const TOOLS = new Set(['sql', 'retrieve', 'geo', 'ocr']);
+    const timeEl = root.querySelector<HTMLElement>('[data-trace-time]')!;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -170,7 +265,7 @@ const scenarios: { tag: string; query: string; steps: Step[] }[] = [
     let current = 0;
     let visible = false;
 
-    const travel = (path: SVGPathElement, ms: number, id: number) =>
+    const travel = (dot: SVGCircleElement, path: SVGPathElement, ms: number, id: number) =>
       new Promise<void>((resolve) => {
         const len = path.getTotalLength();
         const t0 = performance.now();
@@ -187,14 +282,6 @@ const scenarios: { tag: string; query: string; steps: Step[] }[] = [
         requestAnimationFrame(frame);
       });
 
-    const reset = () => {
-      svg.querySelectorAll('.node').forEach((n) => n.classList.remove('active', 'visited'));
-      svg.querySelectorAll('.edge').forEach((e) => e.classList.remove('lit'));
-      dot.setAttribute('cx', '-10');
-      dot.setAttribute('cy', '-10');
-      logEl.innerHTML = '';
-    };
-
     const log = (text: string, t: number) => {
       const li = document.createElement('li');
       li.innerHTML = `<span class="t">${(t / 1000).toFixed(2)}s</span>`;
@@ -205,64 +292,79 @@ const scenarios: { tag: string; query: string; steps: Step[] }[] = [
       while (logEl.children.length > 4) logEl.firstElementChild!.remove();
     };
 
-    const counts = (steps: Step[], upto: number) => {
-      const s = steps.slice(0, upto + 1);
-      stepsEl.textContent = String(s.length);
-      toolsEl.textContent = String(s.filter(([n]) => TOOLS.has(n)).length);
-      retriesEl.textContent = String(s.filter(([, l]) => l.startsWith('✗')).length);
+    const counts = (steps: Step[], upto: number, clock: number) => {
+      stepsEl.textContent = String(upto + 1);
+      retriesEl.textContent = String(steps.slice(0, upto + 1).filter(([, l]) => l.startsWith('✗')).length);
+      timeEl.textContent = `${(clock / 1000).toFixed(1)}s`;
     };
 
     async function play(i: number) {
       const id = ++run;
       current = i;
       tabs.forEach((t, k) => t.setAttribute('aria-pressed', String(k === i)));
-      const { query, steps } = scenarios[i];
-      queryEl.textContent = query;
-      reset();
+      panels.forEach((p, k) => (p.hidden = k !== i));
+      const panel = panels[i];
+      const svg = panel.querySelector('svg')!;
+      const dot = svg.querySelector<SVGCircleElement>('.dot')!;
+      const node = (n: string) => svg.querySelector(`[data-node="${n}"]`)!;
+      const edge = (a: string, b: string) => svg.querySelector<SVGPathElement>(`[data-edge="${a}>${b}"]`);
+      const { steps } = systems[i];
+
+      svg.querySelectorAll('.node').forEach((n) => n.classList.remove('active', 'visited'));
+      svg.querySelectorAll('.edge').forEach((e) => e.classList.remove('lit'));
+      dot.setAttribute('cx', '-10');
+      logEl.innerHTML = '';
 
       if (reduce) {
-        steps.forEach(([n, l], k) => {
+        let clock = 0;
+        steps.forEach(([n, l, from], k) => {
           node(n).classList.add('visited');
-          if (k > 0) edge(steps[k - 1][0], n)?.classList.add('lit');
-          log(l, k * 400);
+          const prev = from ?? steps[k - 1]?.[0];
+          if (prev && prev !== n) edge(prev, n)?.classList.add('lit');
+          clock += 400;
+          log(l, clock);
         });
-        node(steps[steps.length - 1][0]).classList.add('active');
-        counts(steps, steps.length - 1);
+        counts(steps, steps.length - 1, clock);
         return;
       }
 
       let clock = 0;
       for (let k = 0; k < steps.length; k++) {
         if (id !== run) return;
-        const [n, text] = steps[k];
-        const prev = k > 0 ? steps[k - 1][0] : null;
+        const [n, text, from] = steps[k];
+        const prev = from ?? (k > 0 ? steps[k - 1][0] : null);
         const path = prev && prev !== n ? edge(prev, n) : null;
         if (path) {
           path.classList.add('lit');
-          await travel(path, 520, id);
-          clock += 180 + Math.round(Math.random() * 260);
+          await travel(dot, path, 520, id);
+          clock += 150 + Math.round(Math.random() * 300);
         } else if (prev) {
           await sleep(380);
-          clock += 400 + Math.round(Math.random() * 500);
+          clock += 300 + Math.round(Math.random() * 500);
         }
         if (id !== run) return;
         svg.querySelectorAll('.node.active').forEach((el) => el.classList.replace('active', 'visited'));
         node(n).classList.add('active');
+        // Light every edge feeding this node from a step that already ran (fan-in).
+        svg.querySelectorAll<SVGPathElement>(`[data-edge$=">${n}"]`).forEach((e) => {
+          const src = e.dataset.edge!.split('>')[0];
+          if (svg.querySelector(`[data-node="${src}"].visited`)) e.classList.add('lit');
+        });
         log(text, clock);
-        counts(steps, k);
+        counts(steps, k, clock);
         await sleep(text.startsWith('✗') ? 900 : 520);
       }
 
       if (!auto) return;
       await sleep(2600);
       while (!visible || document.hidden) await sleep(500);
-      if (id === run && auto) play((current + 1) % scenarios.length);
+      if (id === run && auto) play((current + 1) % systems.length);
     }
 
     tabs.forEach((t) =>
       t.addEventListener('click', () => {
         auto = false;
-        play(Number(t.dataset.scenario));
+        play(Number(t.dataset.system));
       })
     );
 
@@ -352,11 +454,32 @@ const scenarios: { tag: string; query: string; steps: Step[] }[] = [
     color: var(--accent);
   }
 
+  .system {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.25rem 0.75rem;
+    margin: 0;
+    padding: 0.8rem 1rem 0;
+  }
+
+  .system strong {
+    font-family: var(--font-display);
+    font-size: 0.98rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+
+  .system span {
+    align-self: center;
+  }
+
   .query {
     margin: 0;
-    padding: 0.85rem 1rem 0.25rem;
-    font-size: 0.82rem;
-    color: var(--text);
+    padding: 0.35rem 1rem 0.2rem;
+    font-size: 0.8rem;
+    color: var(--text-2);
   }
 
   .caret {
@@ -376,10 +499,10 @@ const scenarios: { tag: string; query: string; steps: Step[] }[] = [
     fill: none;
     stroke: var(--border-strong);
     stroke-width: 1.2;
-    transition: stroke 0.3s, opacity 0.3s;
+    transition: stroke 0.3s;
   }
 
-  .edge.retry {
+  .edge.dashed {
     stroke-dasharray: 3 3;
   }
 
@@ -388,13 +511,10 @@ const scenarios: { tag: string; query: string; steps: Step[] }[] = [
     stroke-width: 1.6;
   }
 
-  .retry-label {
+  .edge-label {
     font-family: var(--font-mono);
     font-size: 8px;
     fill: var(--muted);
-    transform-box: fill-box;
-    transform-origin: center;
-    transform: rotate(-90deg);
     text-anchor: middle;
   }
 

@@ -15,8 +15,16 @@ const work = ['salesforce-saql-analytics', 'evidence-backed-memory', 'indian-nav
   .filter((c) => c !== undefined);
 
 const numbers = [
-  { value: '22K→40K', label: 'context length', note: 'Ministral-3-8B FP8 on a 16 GB Blackwell card, via FP8 KV cache' },
-  { value: '7-stage', label: 'multi-agent graph', note: 'LangGraph state machine for job-aligned assessment generation' },
+  {
+    value: '~2×',
+    label: 'inference optimization',
+    note: 'context on the same GPU via FP8 KV cache and prompt-aware batching, plus speculative decoding'
+  },
+  {
+    value: '5+',
+    label: 'services, air-gapped',
+    note: 'on-prem LLM platform deployed on-site for the Indian Navy, with no internet access'
+  },
   { value: '10×', label: 'cheaper RAG', note: 'replaced a managed RAG service with a custom retrieval cascade' },
   { value: '12K★', label: 'kepler.gl', note: 'merged PR #3262 fixing stale LLM state in the AI assistant' }
 ];
